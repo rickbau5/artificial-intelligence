@@ -35,7 +35,7 @@ object SolveEight {
             board.cells.flatMap(_.map(_.toString).getOrElse(" "))
               .sliding(size, size)
               .zip(
-                  solution.last.board.cells
+                  solution.last.state.asInstanceOf[Board].cells
                     .flatMap(_.map(_.toString).getOrElse(" "))
                     .sliding(size, size)
               ).foreach(p => println(s"${p._1.mkString(" ")}   ${p._2.mkString(" ")}"))
@@ -47,7 +47,7 @@ object SolveEight {
     }
 
     def solveBFS(board: Board): List[Node] = {
-        def bfs(layer: Stream[Node]): Node = layer.find(_.board.isSolved) match {
+        def bfs(layer: Stream[Node]): Node = layer.find(_.state.isGoal) match {
             case Some(n) => n
             case None =>
                 bfs(layer.flatMap(_.children))
@@ -65,13 +65,18 @@ object SolveEight {
 
     def playSolution(solution: List[Node]): Unit = {
         solution foreach { node =>
-            node.board.show()
+            println(node.state)
             println(node.lastMove)
             StdIn.readLine("> ")
         }
     }
 }
 
+abstract class State {
+    def isGoal: Boolean
+    def transition(action: Action): State
+    def validActions: List[Action]
+}
 object Board {
     def default = generateBoard(3)
 
@@ -98,13 +103,13 @@ object Board {
         }
     }
 }
-case class Board(cells: List[Option[Int]], width: Int) {
+case class Board(cells: List[Option[Int]], width: Int) extends State {
     /**
       * Check if board is solved.
       *
       * @return T/F whether board is solved
       */
-    def isSolved: Boolean = {
+    override def isGoal: Boolean = {
         // this way is a bit faster than old method of checking
         var last = cells.flatten.head
         var ordered = true
@@ -145,7 +150,7 @@ case class Board(cells: List[Option[Int]], width: Int) {
         }
     }
 
-    def move(dir: MoveAction): Board = {
+    def transition(dir: Action): Board = {
         val (idx, _) = findEmpty()
         val moveIdx = dir match {
             case Left => right(idx)
@@ -163,7 +168,7 @@ case class Board(cells: List[Option[Int]], width: Int) {
         }
     }
 
-    def validMoves(): List[MoveAction] = {
+    def validActions: List[Action] = {
         val (idx, _) = findEmpty()
         val moves = List(
             left(idx).map(_ => Right),
@@ -227,29 +232,29 @@ case class Board(cells: List[Option[Int]], width: Int) {
     }
 }
 
-sealed trait MoveAction {
+sealed trait Action {
     // Move that undoes this one
-    val inverse: MoveAction
+    val inverse: Action
     // For ordering
     val id: Int
 }
-case object Left extends MoveAction {
+case object Left extends Action {
     override val inverse = Right
     override val id = 0
 }
-case object Right extends MoveAction {
+case object Right extends Action {
     override val inverse = Left
     override val id = 1
 }
-case object Up extends MoveAction {
+case object Up extends Action {
     override val inverse = Down
     override val id = 2
 }
-case object Down extends MoveAction {
+case object Down extends Action {
     override val inverse = Up
     override val id = 3
 }
-case object No extends MoveAction {
+case object No extends Action {
     override val inverse = No
     override val id = 4
 }
@@ -257,23 +262,23 @@ case object No extends MoveAction {
 object Node {
     var visited = 0
 }
-class Node(val board: Board, val lastMove: MoveAction, val parent: Option[Node]) {
+class Node(val state: State, val lastMove: Action, val parent: Option[Node]) {
     Node.visited += 1
     // Only evaluate children when asked for
-    lazy val children = board.validMoves()
+    lazy val children = state.validActions
       .filter(_ != lastMove.inverse)
-      .map(action => new Node(board.move(action), action, Option(this)))
+      .map(action => new Node(state.transition(action), action, Option(this)))
       .distinct
       .sortBy(_.lastMove.id)
 
     override def toString: String = {
         "Node [\nboard: \n" +
-          board + "\nlast:\n" +
+          state + "\nlast:\n" +
           lastMove +
           "\n]"
     }
 
     override def equals(obj: scala.Any): Boolean = obj match {
-        case other: Node => other.board.cells == this.board.cells
+        case other: Node => other.state.equals(this.state)
     }
 }
