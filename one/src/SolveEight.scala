@@ -14,7 +14,9 @@ object SolveEight {
     val rand = new Random()
 
     def main(args: Array[String]): Unit = {
-        run(30, 3)(solveBFS)
+        run(30, 3)(solve(_) { board =>
+            bfs_Stream(new Node(board, No, None).children.toStream)
+        })
     }
 
     def timed[B](func: => B): (B, Long) = {
@@ -46,21 +48,34 @@ object SolveEight {
         }
     }
 
-    def solveBFS(board: Board): List[Node] = {
-        def bfs(layer: Stream[Node]): Node = layer.find(_.state.isGoal) match {
-            case Some(n) => n
-            case None =>
-                bfs(layer.flatMap(_.children))
-        }
-
-        val solutionNode = bfs(new Node(board, No, None).children.toStream)
+    def generateMove(endNode: Node): List[Node] = {
         val moves = mutable.ListBuffer.empty[Node]
-        var node = solutionNode
+        var node = endNode
         while (node.parent.isDefined) {
             moves += node
             node = node.parent.get
         }
         moves.reverse.toList
+    }
+
+    def bfs_Stream(layer: Stream[Node]): Node = layer.find(_.state.isGoal) match {
+        case Some(n) => n
+        case None =>
+            bfs_Stream(layer.flatMap(_.children))
+    }
+
+    def bfs_Closed(layer: Set[Node], visited: mutable.ListBuffer[Node]): Node = layer.find(_.state.isGoal) match {
+        case Some(n) => n
+        case None =>
+            visited ++= layer
+
+            bfs_Closed(layer.flatMap(_.children) -- visited, visited)
+    }
+
+    def solve[A](start: A)(recursiveFunction: (A) => Node): List[Node] = {
+        val solutionNode = recursiveFunction(start)
+
+        generateMove(solutionNode)
     }
 
     def playSolution(solution: List[Node]): Unit = {
