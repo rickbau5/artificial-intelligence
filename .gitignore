@@ -1,0 +1,12 @@
+
+# OS
+.DS_Store
+
+# IntelliJ
+*/.idea
+*.iml
+
+# Java
+*.jar
+*.class
+MANIFEST.MF
