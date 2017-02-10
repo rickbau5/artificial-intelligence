@@ -70,69 +70,6 @@ object SolveEight {
             StdIn.readLine("> ")
         }
     }
-
-    // Some regexs for matching the commands
-    val numberR  = raw"(\d+)".r
-    val shuffleR = raw"s (\d+)".r
-    val puzzleR  = raw"p (\d+)".r
-
-    // The game loop, continues looping until either
-    //    1) the board is solved
-    //    2) the player quits
-    def gameStep(board: Board): Board = {
-        board.show()
-        println(board.validMoves().mkString(", "))
-        StdIn.readLine("> ") match {
-            case numberR(str) =>
-                val idx = str.toInt
-                if (idx >= 0 && idx < board.width * board.width) {
-                    board.move(idx)
-                } else {
-                    println("Number must be less than " + board.width * board.width)
-                    board
-                }
-
-            case shuffleR(str) =>
-                Board.shuffle(board, str.toInt)
-
-            case puzzleR(str) =>
-                val size = str.toInt
-                if (size >= 0) {
-                    Board.shuffle(Board.generateBoard(size), 1000)
-                } else {
-                    println("Size must be non-negative.")
-                    board
-                }
-
-            case MoveLeft(_) => board.move(Left)
-            case MoveRight(_) => board.move(Right)
-            case MoveUp(_) => board.move(Up)
-            case MoveDown(_) => board.move(Down)
-
-            case "?" =>
-                printHelp()
-                board
-
-            case Quit(cmd) =>
-                sys.exit()
-
-            case _ =>
-                println("???")
-                board
-        }
-    }
-
-    def printHelp(): Unit = {
-        println(
-            """ Help:
-              |   ?     - this information
-              |   q     - quit
-              |   s n   - shuffle n number of times
-              |   n     - any number n from 0 to the width of the board
-              |   p n   - create a new puzzle with size n
-              |           will be regarded as a choice of a piece to move.
-            """.stripMargin.trim)
-    }
 }
 
 object Board {
@@ -340,24 +277,3 @@ class Node(val board: Board, val lastMove: MoveAction, val parent: Option[Node])
         case other: Node => other.board.cells == this.board.cells
     }
 }
-
-/**
-  * Provides pattern matching for the simple commands
-  *
-  * @param command fully qualified command
-  * @param alias
-  */
-abstract class Command(command: String, alias: String) {
-    def unapply(arg: CharSequence): Option[Command] = {
-        if (arg == command || arg == alias) {
-            Option(this)
-        } else {
-            None
-        }
-    }
-}
-object Quit extends Command("quit", "q")
-object MoveLeft extends Command("left", "l")
-object MoveRight extends Command("right", "r")
-object MoveUp extends Command("up", "u")
-object MoveDown extends Command("down", "d")
