@@ -1,3 +1,4 @@
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.io.StdIn
 import scala.util.Random
@@ -12,11 +13,25 @@ import scala.util.Random
   */
 object SolveEight {
     val rand = new Random()
+    val DFS_MAX_DEPTH = 31
 
     def main(args: Array[String]): Unit = {
-        run(30, 3)(solve(_) { board =>
-            bfs_Stream(new Node(board, No, None).children.toStream)
-        })
+        val board = Board.generateBoard(3).transition(Down).transition(Right).transition(Down).transition(Right)
+
+        board.show()
+        val start = new Node(board, No, None, 0)
+        val (bfsSol, bfsTime) = timed(solve(start)(node => bfs_Stream(node.children.toStream)))
+        println(bfsSol.length)
+        println(bfsTime / 1000.0)
+        println(Node.visited)
+        println("-----")
+        val (dfsSol, dfsTime) = timed(solve(start)(node => dfs(node.children, List(node))))
+        println(dfsSol.length)
+        println(dfsTime / 1000.0)
+        println(Node.visited)
+        // run(30, 3)(solve(_) { board =>
+        //     bfs_Stream(new Node(board, No, None).children.toStream)
+        // })
     }
 
     def timed[B](func: => B): (B, Long) = {
@@ -28,7 +43,6 @@ object SolveEight {
 
     def run(iterations: Int, size: Int)(solveFunction: (Board) => List[Node]): Unit = {
         (0 until iterations) map { it =>
-            Node.visited = 0
             val board = Board.shuffle(Board.generateBoard(size), 75)
             println(s"Beginning iteration $it.")
             board.show()
@@ -48,7 +62,7 @@ object SolveEight {
         }
     }
 
-    def generateMove(endNode: Node): List[Node] = {
+    def generateMoves(endNode: Node): List[Node] = {
         val moves = mutable.ListBuffer.empty[Node]
         var node = endNode
         while (node.parent.isDefined) {
@@ -58,24 +72,40 @@ object SolveEight {
         moves.reverse.toList
     }
 
+    @tailrec
     def bfs_Stream(layer: Stream[Node]): Node = layer.find(_.state.isGoal) match {
         case Some(n) => n
         case None =>
             bfs_Stream(layer.flatMap(_.children))
     }
 
+    @tailrec
     def bfs_Closed(layer: Set[Node], visited: mutable.ListBuffer[Node]): Node = layer.find(_.state.isGoal) match {
         case Some(n) => n
         case None =>
             visited ++= layer
-
             bfs_Closed(layer.flatMap(_.children) -- visited, visited)
     }
 
+    @tailrec
+    def dfs(nodes: List[Node], visited: List[Node]): Node = nodes match {
+        case node :: rest =>
+            if (node.state.isGoal) {
+                node
+            } else if (visited.contains(node) || node.depth == DFS_MAX_DEPTH) {
+                dfs(rest, visited)
+            } else {
+                dfs(node.children ++ rest, visited ++ List(node))
+            }
+        case Nil =>
+            null
+    }
+
     def solve[A](start: A)(recursiveFunction: (A) => Node): List[Node] = {
+        Node.visited = 0
         val solutionNode = recursiveFunction(start)
 
-        generateMove(solutionNode)
+        generateMoves(solutionNode)
     }
 
     def playSolution(solution: List[Node]): Unit = {
@@ -245,6 +275,12 @@ case class Board(cells: List[Option[Int]], width: Int) extends State {
           }
           .mkString("\n")
     }
+
+    override def equals(obj: scala.Any): Boolean = obj match {
+        case other: Board =>
+            other.cells.equals(this.cells)
+        case _ => false
+    }
 }
 
 sealed trait Action {
@@ -277,12 +313,12 @@ case object No extends Action {
 object Node {
     var visited = 0
 }
-class Node(val state: State, val lastMove: Action, val parent: Option[Node]) {
+class Node(val state: State, val lastMove: Action, val parent: Option[Node], val depth: Int) {
     Node.visited += 1
     // Only evaluate children when asked for
     lazy val children = state.validActions
       .filter(_ != lastMove.inverse)
-      .map(action => new Node(state.transition(action), action, Option(this)))
+      .map(action => new Node(state.transition(action), action, Option(this), depth + 1))
       .distinct
       .sortBy(_.lastMove.id)
 
@@ -295,5 +331,6 @@ class Node(val state: State, val lastMove: Action, val parent: Option[Node]) {
 
     override def equals(obj: scala.Any): Boolean = obj match {
         case other: Node => other.state.equals(this.state)
+        case _ => false
     }
 }
