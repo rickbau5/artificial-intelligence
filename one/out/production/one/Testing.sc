@@ -1,8 +1,29 @@
-val t =
-    """123
-      |4 5
-      |678
-    """.trim().stripMargin.split("\n").flatMap(_.split("")).toList
+import scala.util.Try
 
-t.slice(0, 1)
-t.slice (1, 2)
+val nums = 1 until 9 toList
+
+val example = List(
+    4, 1, 3,
+    2, 5, 7,
+    8, 6    )
+val two = List(
+    1, 2, 4,
+    3, 5, 6,
+    7, 8    )
+
+val board = new Board(two.map(Option(_)) ++ List(Option.empty), 3)
+board.show()
+
+val b = new Board("13 425786".split("").map(c => Try(c.toInt).toOption).toList, 3)
+b.show()
+SolveEight.distance(b)
+val c = new Board("1234 5786".split("").map(c => Try(c.toInt).toOption).toList, 3)
+c.show()
+SolveEight.distance(c)
+
+c.hashCode()
+c.##
+
+
+// Math.abs(x1-x0) + Math.abs(y1-y0);
+

@@ -1,7 +1,8 @@
 import scala.annotation.tailrec
+import scala.collection.immutable.HashSet
 import scala.collection.mutable
 import scala.io.StdIn
-import scala.util.Random
+import scala.util.{Random, Try}
 
 /**
   * Project #1: Solve Eight
@@ -12,26 +13,66 @@ import scala.util.Random
   * Date: 2 Feb. 2017
   */
 object SolveEight {
-    val rand = new Random()
+    val rand = new Random(42 + 666)
     val DFS_MAX_DEPTH = 31
 
     def main(args: Array[String]): Unit = {
-        val board = Board.generateBoard(3).transition(Down).transition(Right).transition(Down).transition(Right)
+        val function = Try(args(0) match {
+            case "bfs" =>
+                println("Using Breadth First Search without closed list")
+                (board: Board) => {
+                    solve(board) { b =>
+                        val start = new Node(b, No, None, 0)
+                        bfs_Stream(start.children)
+                }
+            }
+            case "bfs-closed" =>
+                println("Using Breadth First Search with closed list")
+                (board: Board) => {
+                    solve(board) { b =>
+                        val start = new Node(b, No, None, 0)
+                        bfs_Closed(start.children.toSet, HashSet(start))
+                }
+            }
+            case "dfs" =>
+                println("Using Depth First Search with closed list")
+                (board: Board) => {
+                    solve(board) { b =>
+                        val start = new Node(b, No, None, 0)
+                        dfs(start.children, HashSet(start))
+                }
+            }
+            case "a*-h1" =>
+                println("Using A* with 'misplaced' heuristic with closed list.")
+                (board: Board) => {
+                    solve(board) { b =>
+                        val start = new Node(b, No, None, 0)
+                        aStar(
+                            start.children.map(n => (n, misplaced(n.state.asInstanceOf[Board]))).toList, HashSet(start)
+                        )(misplaced)
+                }
+            }
+            case "a*-h2" =>
+                println("Using A* with 'distance' heuristic with closed list.")
+                (board: Board) => {
+                    solve(board) { b =>
+                        val start = new Node(b, No, None, 0)
+                        aStar(
+                            start.children.map(n => (n, distance(n.state.asInstanceOf[Board]))).toList, HashSet(start)
+                        )(distance)
+                }
+            }
+        }).getOrElse((board: Board) => { solve(board) { b =>
+            val start = new Node(b, No, None, 0)
+            aStar(
+                start.children.map(n => (n, distance(n.state.asInstanceOf[Board]))).toList, HashSet(start)
+            )(distance)
+        }})
 
-        board.show()
-        val start = new Node(board, No, None, 0)
-        val (bfsSol, bfsTime) = timed(solve(start)(node => bfs_Stream(node.children.toStream)))
-        println(bfsSol.length)
-        println(bfsTime / 1000.0)
-        println(Node.visited)
-        println("-----")
-        val (dfsSol, dfsTime) = timed(solve(start)(node => dfs(node.children, List(node))))
-        println(dfsSol.length)
-        println(dfsTime / 1000.0)
-        println(Node.visited)
-        // run(30, 3)(solve(_) { board =>
-        //     bfs_Stream(new Node(board, No, None).children.toStream)
-        // })
+        val iterations = Try(args(1).toInt).getOrElse(30)
+        val boardSize  = Try(args(2).toInt).getOrElse(3)
+
+        run(iterations, boardSize)(function)
     }
 
     def timed[B](func: => B): (B, Long) = {
@@ -42,8 +83,8 @@ object SolveEight {
     }
 
     def run(iterations: Int, size: Int)(solveFunction: (Board) => List[Node]): Unit = {
-        (0 until iterations) map { it =>
-            val board = Board.shuffle(Board.generateBoard(size), 75)
+        (1 to iterations) map { it =>
+            val board = Board.shuffle(Board.generateBoard(size), 100)
             println(s"Beginning iteration $it.")
             board.show()
             val (solution, time) = timed(solveFunction(board))
@@ -56,7 +97,7 @@ object SolveEight {
                     .sliding(size, size)
               ).foreach(p => println(s"${p._1.mkString(" ")}   ${p._2.mkString(" ")}"))
             println("Number of moves: " + solution.length)
-            println(s"# ${time / 1000.0} ${solution.length} ${Node.visited}")
+            println(s"# ${time / 1000.0} ${solution.length} ${Node.generated} ${Node.visited}")
             println("--------------------------")
             solution
         }
@@ -80,28 +121,79 @@ object SolveEight {
     }
 
     @tailrec
-    def bfs_Closed(layer: Set[Node], visited: mutable.ListBuffer[Node]): Node = layer.find(_.state.isGoal) match {
+    def bfs_Closed(layer: Set[Node], visited: HashSet[Node]): Node = layer.find(_.state.isGoal) match {
         case Some(n) => n
         case None =>
-            visited ++= layer
-            bfs_Closed(layer.flatMap(_.children) -- visited, visited)
+            Node.visited += layer.size
+            val vis = visited ++ layer
+            bfs_Closed(layer.flatMap(_.children) -- vis, vis)
     }
 
     @tailrec
-    def dfs(nodes: List[Node], visited: List[Node]): Node = nodes match {
-        case node :: rest =>
+    def dfs(nodes: Stream[Node], visited: HashSet[Node]): Node = nodes match {
+        case node #:: rest =>
+            Node.visited += 1
             if (node.state.isGoal) {
                 node
             } else if (visited.contains(node) || node.depth == DFS_MAX_DEPTH) {
                 dfs(rest, visited)
             } else {
-                dfs(node.children ++ rest, visited ++ List(node))
+                dfs(node.children ++ rest, visited + node)
             }
+        case Stream.Empty =>
+            null
+    }
+
+    def misplaced(board: Board): Int = {
+        // board.intRep.toString.zip(str)
+        //   .count { case (a, b) => a != b }
+        board.cells.zipWithIndex
+          .map {
+              case (Some(v), i) => v - 1 != i
+              case (None, i)    => i != 8
+          }.count(_ == true)
+    }
+
+    /**
+      * Compute the sum of all the Manhattan distances between where the cells are and
+      * where they should be.
+      *
+      * @param board
+      * @return
+      */
+    def distance(board: Board): Int = {
+        val w = board.width
+        board.cells.zipWithIndex
+          .map {
+              case (Some(v), i) =>
+                  // println(v, i + 1, (v - 1) % 3, (v - 1) / 3, i % 3, i / 3)
+                  Math.abs((v - 1) % w - i % w) + Math.abs((v - 1) / w - i / w)
+              case (None, _) =>
+                  0
+          }.sum
+    }
+
+    @tailrec
+    def aStar(nodes: List[(Node, Int)], visited: HashSet[Node])(heuristic: (Board) => Int): Node = nodes match {
+        case (node, cost) :: rest =>
+            Node.visited += 1
+            if (node.state.isGoal) {
+                node
+            } else if (visited.contains(node)) {
+                Node.visited -= 1
+                aStar(rest, visited)(heuristic)
+            } else {
+                val next = (node.children.map(n => (n, heuristic(n.state.asInstanceOf[Board]) + cost)).toList ++ rest)
+                  .sortBy(_._2)
+                aStar(next, visited + node)(heuristic)
+            }
+
         case Nil =>
             null
     }
 
     def solve[A](start: A)(recursiveFunction: (A) => Node): List[Node] = {
+        Node.generated = 0
         Node.visited = 0
         val solutionNode = recursiveFunction(start)
 
@@ -149,22 +241,25 @@ object Board {
     }
 }
 case class Board(cells: List[Option[Int]], width: Int) extends State {
+    val intRep = cells.map(_.getOrElse(0)).mkString("").toInt
     /**
       * Check if board is solved.
       *
       * @return T/F whether board is solved
       */
     override def isGoal: Boolean = {
+        intRep == 123456780
+
         // this way is a bit faster than old method of checking
-        var last = cells.flatten.head
-        var ordered = true
-        for (i <- cells.flatten.tail if ordered) {
-            if (i < last) {
-                ordered = false
-            }
-            last = i
-        }
-        ordered
+        // var last = cells.flatten.head
+        // var ordered = true
+        // for (i <- cells.flatten.tail if ordered) {
+        //     if (i < last) {
+        //         ordered = false
+        //     }
+        //     last = i
+        // }
+        // ordered
     }
 
     // Provide logic for board(1) where board is instance
@@ -278,8 +373,13 @@ case class Board(cells: List[Option[Int]], width: Int) extends State {
 
     override def equals(obj: scala.Any): Boolean = obj match {
         case other: Board =>
-            other.cells.equals(this.cells)
+            // other.cells.equals(this.cells)
+            this.intRep == other.intRep
         case _ => false
+    }
+
+    override def hashCode(): Int = {
+        intRep
     }
 }
 
@@ -311,16 +411,15 @@ case object No extends Action {
 }
 
 object Node {
+    var generated = 0
     var visited = 0
 }
 class Node(val state: State, val lastMove: Action, val parent: Option[Node], val depth: Int) {
-    Node.visited += 1
-    // Only evaluate children when asked for
-    lazy val children = state.validActions
+    Node.generated += 1
+
+    lazy val children = state.validActions.toStream
       .filter(_ != lastMove.inverse)
       .map(action => new Node(state.transition(action), action, Option(this), depth + 1))
-      .distinct
-      .sortBy(_.lastMove.id)
 
     override def toString: String = {
         "Node [\nboard: \n" +
@@ -333,4 +432,6 @@ class Node(val state: State, val lastMove: Action, val parent: Option[Node], val
         case other: Node => other.state.equals(this.state)
         case _ => false
     }
+
+    override def hashCode(): Int = state.hashCode()
 }
