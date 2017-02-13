@@ -24,24 +24,24 @@ object SolveEight {
                     solve(board) { b =>
                         val start = new Node(b, No, None, 0)
                         bfs_Stream(start.children)
+                    }
                 }
-            }
             case "bfs-closed" =>
                 println("Using Breadth First Search with closed list")
                 (board: Board) => {
                     solve(board) { b =>
                         val start = new Node(b, No, None, 0)
                         bfs_Closed(start.children.toSet, HashSet(start))
+                    }
                 }
-            }
             case "dfs" =>
                 println("Using Depth First Search with closed list")
                 (board: Board) => {
                     solve(board) { b =>
                         val start = new Node(b, No, None, 0)
                         dfs(start.children, HashSet(start))
+                    }
                 }
-            }
             case "a*-h1" =>
                 println("Using A* with 'misplaced' heuristic with closed list.")
                 (board: Board) => {
@@ -50,8 +50,8 @@ object SolveEight {
                         aStar(
                             start.children.map(n => (n, misplaced(n.state.asInstanceOf[Board]))).toList, HashSet(start)
                         )(misplaced)
+                    }
                 }
-            }
             case "a*-h2" =>
                 println("Using A* with 'distance' heuristic with closed list.")
                 (board: Board) => {
@@ -60,8 +60,8 @@ object SolveEight {
                         aStar(
                             start.children.map(n => (n, distance(n.state.asInstanceOf[Board]))).toList, HashSet(start)
                         )(distance)
+                    }
                 }
-            }
         }).getOrElse((board: Board) => { solve(board) { b =>
             val start = new Node(b, No, None, 0)
             aStar(
@@ -117,6 +117,7 @@ object SolveEight {
     def bfs_Stream(layer: Stream[Node]): Node = layer.find(_.state.isGoal) match {
         case Some(n) => n
         case None =>
+            Node.visited += layer.size
             bfs_Stream(layer.flatMap(_.children))
     }
 
@@ -249,17 +250,6 @@ case class Board(cells: List[Option[Int]], width: Int) extends State {
       */
     override def isGoal: Boolean = {
         intRep == 123456780
-
-        // this way is a bit faster than old method of checking
-        // var last = cells.flatten.head
-        // var ordered = true
-        // for (i <- cells.flatten.tail if ordered) {
-        //     if (i < last) {
-        //         ordered = false
-        //     }
-        //     last = i
-        // }
-        // ordered
     }
 
     // Provide logic for board(1) where board is instance
@@ -281,7 +271,7 @@ case class Board(cells: List[Option[Int]], width: Int) extends State {
                     (idx, cells(index), index, cell)
                 }
                 // Rebuild the board by slicing up the board based on the indices of the moving piece and empty.
-                // Basically just a swap, where there is no swap for ListBuffer
+                // Basically just a swap, where there is no swap for List
                 val newCells = cells.slice(0, mI) ++ List(mC) ++
                   cells.slice(mI + 1, xI) ++ List(xC) ++ cells.slice(xI + 1, cells.length)
                 Board(newCells, width)
