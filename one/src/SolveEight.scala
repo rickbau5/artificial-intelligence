@@ -17,6 +17,10 @@ object SolveEight {
     val DFS_MAX_DEPTH = 31
 
     def main(args: Array[String]): Unit = {
+        go(args)
+    }
+
+    def go(args: Array[String]): Unit = {
         val function = Try(args(0) match {
             case "bfs" =>
                 println("Using Breadth First Search without closed list")
@@ -39,7 +43,7 @@ object SolveEight {
                 (board: Board) => {
                     solve(board) { b =>
                         val start = new Node(b, No, None, 0)
-                        dfs(start.children, HashSet(start))
+                        dfs(start.children.toList, HashSet(start))
                     }
                 }
             case "a*-h1" =>
@@ -130,18 +134,22 @@ object SolveEight {
             bfs_Closed(layer.flatMap(_.children) -- vis, vis)
     }
 
-    @tailrec
-    def dfs(nodes: Stream[Node], visited: HashSet[Node]): Node = nodes match {
-        case node #:: rest =>
+    def dfs(nodes: List[Node], visited: HashSet[Node], depth: Int = 0): Node = nodes match {
+        case head :: tail =>
             Node.visited += 1
-            if (node.state.isGoal) {
-                node
-            } else if (visited.contains(node) || node.depth == DFS_MAX_DEPTH) {
-                dfs(rest, visited)
+            if (head.state.isGoal) {
+                head
+            } else if (visited.contains(head) || depth > DFS_MAX_DEPTH) {
+                null
             } else {
-                dfs(node.children ++ rest, visited + node)
+                val sol = dfs(head.children.toList, visited + head, depth + 1)
+                if (sol != null) {
+                    sol
+                } else {
+                    dfs(tail, visited + head, depth + 1)
+                }
             }
-        case Stream.Empty =>
+        case _ =>
             null
     }
 
@@ -167,7 +175,7 @@ object SolveEight {
         board.cells.zipWithIndex
           .map {
               case (Some(v), i) =>
-                  // println(v, i + 1, (v - 1) % 3, (v - 1) / 3, i % 3, i / 3)
+                  // println(v, i + 1, (v - 1) % w, (v - 1) / w, i % w, i / w)
                   Math.abs((v - 1) % w - i % w) + Math.abs((v - 1) / w - i / w)
               case (None, _) =>
                   0
@@ -181,7 +189,6 @@ object SolveEight {
             if (node.state.isGoal) {
                 node
             } else if (visited.contains(node)) {
-                Node.visited -= 1
                 aStar(rest, visited)(heuristic)
             } else {
                 val next = (node.children.map(n => (n, heuristic(n.state.asInstanceOf[Board]) + cost)).toList ++ rest)
