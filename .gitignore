@@ -5,6 +5,7 @@
 # IntelliJ
 */.idea
 *.iml
+*/out
 
 # Java
 *.jar
