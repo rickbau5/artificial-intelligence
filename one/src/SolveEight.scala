@@ -1,3 +1,5 @@
+import com.sun.istack.internal.NotNull
+
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable
@@ -92,16 +94,21 @@ object SolveEight {
             println(s"Beginning iteration $it.")
             board.show()
             val (solution, time) = timed(solveFunction(board))
-            println(s"Found solution in ${time / 1000.0} seconds.")
-            board.cells.flatMap(_.map(_.toString).getOrElse(" "))
-              .sliding(size, size)
-              .zip(
-                  solution.last.state.asInstanceOf[Board].cells
-                    .flatMap(_.map(_.toString).getOrElse(" "))
-                    .sliding(size, size)
-              ).foreach(p => println(s"${p._1.mkString(" ")}   ${p._2.mkString(" ")}"))
-            println("Number of moves: " + solution.length)
-            println(s"# ${time / 1000.0} ${solution.length} ${Node.generated} ${Node.visited}")
+            if (solution.nonEmpty) {
+                println(s"Found solution in ${time / 1000.0} seconds.")
+                board.cells.flatMap(_.map(_.toString).getOrElse(" "))
+                  .sliding(size, size)
+                  .zip(
+                    solution.last.state.asInstanceOf[Board].cells
+                      .flatMap(_.map(_.toString).getOrElse(" "))
+                      .sliding(size, size)
+                  ).foreach(p => println(s"${p._1.mkString(" ")}   ${p._2.mkString(" ")}"))
+                println("Number of moves: " + solution.length)
+                println(s"# ${time / 1000.0} ${solution.length} ${Node.generated} ${Node.visited}")
+            } else {
+                println("Failed to find a solution")
+                println(s"# ${time / 1000.0} -1 ${Node.generated} ${Node.visited}")
+            }
             println("--------------------------")
             solution
         }
@@ -118,39 +125,39 @@ object SolveEight {
     }
 
     @tailrec
-    def bfs_Stream(layer: Stream[Node]): Node = layer.find(_.state.isGoal) match {
-        case Some(n) => n
+    def bfs_Stream(layer: Stream[Node]): Option[Node] = layer.find(_.state.isGoal) match {
+        case s: Some[Node] => s
         case None =>
             Node.visited += layer.size
             bfs_Stream(layer.flatMap(_.children))
     }
 
     @tailrec
-    def bfs_Closed(layer: Set[Node], visited: HashSet[Node]): Node = layer.find(_.state.isGoal) match {
-        case Some(n) => n
+    def bfs_Closed(layer: Set[Node], visited: HashSet[Node]): Option[Node] = layer.find(_.state.isGoal) match {
+      case s: Some[Node] => s
         case None =>
             Node.visited += layer.size
             val vis = visited ++ layer
             bfs_Closed(layer.flatMap(_.children) -- vis, vis)
     }
 
-    def dfs(nodes: List[Node], visited: HashSet[Node], depth: Int = 0): Node = nodes match {
+    def dfs(nodes: List[Node], visited: HashSet[Node], depth: Int = 0): Option[Node] = nodes match {
         case head :: tail =>
             Node.visited += 1
             if (head.state.isGoal) {
-                head
+                Some(head)
             } else if (visited.contains(head) || depth > DFS_MAX_DEPTH) {
-                null
+                None
             } else {
                 val sol = dfs(head.children.toList, visited + head, depth + 1)
-                if (sol != null) {
+                if (sol.nonEmpty) {
                     sol
                 } else {
                     dfs(tail, visited + head, depth + 1)
                 }
             }
         case _ =>
-            null
+            None
     }
 
     def misplaced(board: Board): Int = {
@@ -183,11 +190,11 @@ object SolveEight {
     }
 
     @tailrec
-    def aStar(nodes: List[(Node, Int)], visited: HashSet[Node])(heuristic: (Board) => Int): Node = nodes match {
+    def aStar(nodes: List[(Node, Int)], visited: HashSet[Node])(heuristic: (Board) => Int): Option[Node] = nodes match {
         case (node, cost) :: rest =>
             Node.visited += 1
             if (node.state.isGoal) {
-                node
+                Some(node)
             } else if (visited.contains(node)) {
                 aStar(rest, visited)(heuristic)
             } else {
@@ -200,12 +207,13 @@ object SolveEight {
             null
     }
 
-    def solve[A](start: A)(recursiveFunction: (A) => Node): List[Node] = {
+    def solve[A](start: A)(recursiveFunction: (A) => Option[Node]): List[Node] = {
         Node.generated = 0
         Node.visited = 0
         val solutionNode = recursiveFunction(start)
 
-        generateMoves(solutionNode)
+        solutionNode.map(generateMoves)
+          .getOrElse(List.empty[Node])
     }
 
     def playSolution(solution: List[Node]): Unit = {
