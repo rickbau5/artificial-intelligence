@@ -1,5 +1,3 @@
-import com.sun.istack.internal.NotNull
-
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable
@@ -15,6 +13,7 @@ import scala.util.{Random, Try}
   * Date: 2 Feb. 2017
   */
 object SolveEight {
+    import Action.No
     val rand = new Random(42 + 666)
     val DFS_MAX_DEPTH = 31
 
@@ -161,8 +160,6 @@ object SolveEight {
     }
 
     def misplaced(board: Board): Int = {
-        // board.intRep.toString.zip(str)
-        //   .count { case (a, b) => a != b }
         board.cells.zipWithIndex
           .map {
               case (Some(v), i) => v - 1 != i
@@ -257,6 +254,7 @@ object Board {
     }
 }
 case class Board(cells: List[Option[Int]], width: Int) extends State {
+    import Action._
     val intRep = cells.map(_.getOrElse(0)).mkString("").toInt
     /**
       * Check if board is solved.
@@ -388,31 +386,34 @@ case class Board(cells: List[Option[Int]], width: Int) extends State {
     }
 }
 
+object Action {
+    case object Left extends Action {
+        override val inverse = Right
+        override val id = 0
+    }
+    case object Right extends Action {
+        override val inverse = Left
+        override val id = 1
+    }
+    case object Up extends Action {
+        override val inverse = Down
+        override val id = 2
+    }
+    case object Down extends Action {
+        override val inverse = Up
+        override val id = 3
+    }
+    case object No extends Action {
+        override val inverse = No
+        override val id = 4
+    }
+}
+
 sealed trait Action {
     // Move that undoes this one
     val inverse: Action
     // For ordering
     val id: Int
-}
-case object Left extends Action {
-    override val inverse = Right
-    override val id = 0
-}
-case object Right extends Action {
-    override val inverse = Left
-    override val id = 1
-}
-case object Up extends Action {
-    override val inverse = Down
-    override val id = 2
-}
-case object Down extends Action {
-    override val inverse = Up
-    override val id = 3
-}
-case object No extends Action {
-    override val inverse = No
-    override val id = 4
 }
 
 object Node {
