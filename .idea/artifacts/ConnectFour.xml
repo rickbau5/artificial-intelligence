@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ConnectFour">
+    <output-path>$PROJECT_DIR$/out/artifacts/ConnectFour</output-path>
+    <root id="archive" name="ConnectFour.jar">
+      <element id="module-output" name="two" />
+      <element id="extracted-dir" path="$USER_HOME$/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.1.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
