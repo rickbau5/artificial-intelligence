@@ -8,7 +8,7 @@ import scala.util.Try
 object ConnectFour {
 
   def main(args: Array[String]): Unit = {
-    val board = new Board
+    val board = new ConnectFourBoard
     board.show()
 
     var player = true
@@ -26,11 +26,11 @@ object ConnectFour {
   }
 }
 
-class Board {
+class ConnectFourBoard {
   val list = new java.util.ArrayList[Integer](42)
   (0 until 6*7).foreach(_ => list.add(0))
 
-  def place(row: Int, player: Int): Board = {
+  def place(row: Int, player: Int): ConnectFourBoard = {
     if (list.get(row) != 0) {
       this
     } else {
