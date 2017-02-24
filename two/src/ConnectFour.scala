@@ -40,6 +40,8 @@ class ConnectBoard(w: Int, h: Int, dim: Int = 4) {
     val list = new java.util.ArrayList[Integer](w * h)
     (0 until w * h).foreach(_ => list.add(0))
 
+    var lastPlayer = 2
+
     def checkRows(list: List[Integer]): Int =  {
         list.sliding(w, w).foldLeft(0) { case (winner, row) =>
             if (winner != 0) {
@@ -65,6 +67,35 @@ class ConnectBoard(w: Int, h: Int, dim: Int = 4) {
         }
     }
 
+    def checkDiagonal(map: Map[(Int, Int), Integer], inc: Int): Int = {
+        map.foldLeft(0) { case (winner, ((x, y), player)) =>
+            if (winner != 0) {
+                winner
+            } else {
+                if (player != 0) {
+                    val ret = (1 until dim).foldLeft(1) { case (cons, i) =>
+                        if (x + inc < h && y + inc < w && x + inc > 0 && y + inc > 0) {
+                            if (map(x + inc, y + inc) == player) {
+                                cons + 1
+                            } else {
+                                0
+                            }
+                        } else {
+                            0
+                        }
+                    }
+                    if (ret == dim) {
+                        player.toInt
+                    } else {
+                        0
+                    }
+                } else {
+                    winner
+                }
+            }
+        }
+    }
+
     def victor: Int = {
         val scalaList = list.asScala.toList
         val rw = checkRows(scalaList)
@@ -77,12 +108,25 @@ class ConnectBoard(w: Int, h: Int, dim: Int = 4) {
             val cw = checkRows(transpose)
 
             if (cw == 0) {
-                // Diag check
-                0
+                val map = scalaList.zipWithIndex.map { case (v, i) => ((i / w, i % w), v) }
+                  .toMap
+
+                val dw = checkDiagonal(map, 1)
+                if (dw == 0) {
+                    val drw = checkDiagonal(map, -1)
+                    if (drw != 0)
+                        println("Reverse Diagonal")
+                    drw
+                } else {
+                    println("Diagonal")
+                    dw
+                }
             } else {
+                println("Column")
                 cw
             }
         } else {
+            println("Row")
             rw
         }
     }
@@ -131,6 +175,7 @@ class ConnectBoard(w: Int, h: Int, dim: Int = 4) {
                 at += w
             }
             list.set(at, player)
+            lastPlayer = player
 
             true
         }
@@ -148,7 +193,7 @@ class ConnectBoard(w: Int, h: Int, dim: Int = 4) {
             }
         }
         val hf = List.fill(13)('-').mkString("")
-        println(s"|$hf|")
+        println(s"|$hf|" + {if (lastPlayer == 1) "x" else "o"})
         buf.sliding(7, 7)
         .foreach(line => println(s"|${line.mkString("|")}|"))
         println(s"|$hf|")
