@@ -29,14 +29,57 @@ object ConnectFour {
                 }
 
                 board.show()
+
+                case "h" =>
+                    heuristic(board)
                 case _ =>
                 ;
             }
         }
     }
+
+    def emptyNeighbors(xy: (Int, Int), map: Map[(Int, Int), Int]): List[(Int, Int)] = List(
+            (xy._1 - 1, xy._2) -> map.get(xy._1 - 1, xy._2),
+            (xy._1 + 1, xy._2) -> map.get(xy._1 + 1, xy._2),
+            (xy._1, xy._2 - 1) -> map.get(xy._1, xy._2 - 1),
+            (xy._1, xy._2 + 1) -> map.get(xy._1, xy._2 + 1),
+            (xy._1 - 1, xy._2 - 1) -> map.get(xy._1 - 1, xy._2 - 1),
+            (xy._1 + 1, xy._2 + 1) -> map.get(xy._1 + 1, xy._2 + 1),
+            (xy._1 - 1, xy._2 + 1) -> map.get(xy._1 - 1, xy._2 + 1),
+            (xy._1 + 1, xy._2 - 1) -> map.get(xy._1 + 1, xy._2 - 1)
+        ).foldLeft(List.empty[(Int, Int)]) { case (list, ((x, y), opt)) =>
+            opt match {
+                case Some(0) =>
+                    if (map.get(x, y + 1).getOrElse(3) != 0)
+                        list ++ List((x, y))
+                    else
+                        list
+                case _ =>
+                    list
+            }
+        }
+
+    def heuristic(board: ConnectBoard): Int = {
+        val scores = mutable.Map((0 until board.w * board.h).map(i => board.indexToXY(i) -> 0):_*)
+        val map = board.list.asScala.zipWithIndex.map { case (v, idx) =>
+            board.indexToXY(idx) -> v.toInt
+        }.toMap
+        map.foreach { case ((x, y), player) =>
+            if (player == board.lastPlayer) {
+                emptyNeighbors((x, y), map).foreach(xy => scores(xy) += 1)
+            }
+        }
+        val hf = List.fill(13)('-').mkString("")
+        println(s"|$hf|" + {if (board.lastPlayer == 1) "o" else "x"})
+        scores.toList.map(e => board.xyToIndex(e._1) -> e._2).sortBy(_._1).sliding(7, 7)
+          .foreach(v => println(s"|${v.map(_._2).mkString("|")}|"))
+        println(s"|$hf|")
+
+        0
+    }
 }
 
-class ConnectBoard(w: Int, h: Int, dim: Int = 4) {
+class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
     val list = new java.util.ArrayList[Integer](w * h)
     (0 until w * h).foreach(_ => list.add(0))
 
@@ -163,97 +206,6 @@ class ConnectBoard(w: Int, h: Int, dim: Int = 4) {
             }
         case None =>
             0
-    }
-
-    def checkRows(list: List[Integer]): Int =  {
-        list.sliding(w, w).foldLeft(0) { case (winner, row) =>
-            if (winner != 0) {
-                winner
-            } else {
-                val (p, c) = row.foldLeft((0, 0)) { case ((player, consecutive), v) =>
-                    if (consecutive == dim) {
-                        (player, dim)
-                    } else {
-                        if (v == player) {
-                            (player, consecutive + 1)
-                        } else {
-                            (v, 1)
-                        }
-                    }
-                }
-                if (c == dim) {
-                    p
-                } else {
-                    0
-                }
-            }
-        }
-    }
-
-    def checkDiagonal(map: Map[(Int, Int), Integer], inc: Int): Int = {
-        map.foldLeft(0) { case (winner, ((x, y), player)) =>
-            if (winner != 0) {
-                winner
-            } else {
-                if (player != 0) {
-                    val ret = (1 until dim).foldLeft(1) { case (cons, i) =>
-                        if (x + inc < h && y + inc < w && x + inc > 0 && y + inc > 0) {
-                            if (map(x + inc, y + inc) == player) {
-                                cons + 1
-                            } else {
-                                0
-                            }
-                        } else {
-                            0
-                        }
-                    }
-                    if (ret == dim) {
-                        player.toInt
-                    } else {
-                        0
-                    }
-                } else {
-                    winner
-                }
-            }
-        }
-
-        0
-    }
-
-    def victor_old: Int = {
-        val scalaList = list.asScala.toList
-        val rw = checkRows(scalaList)
-
-        if (rw == 0) {
-            val transpose = (0 until w).flatMap { i =>
-                (0 until h).map(j => list.get(i + j * w)).toList
-            }.toList
-
-            val cw = checkRows(transpose)
-
-            if (cw == 0) {
-                val map = scalaList.zipWithIndex.map { case (v, i) => ((i / w, i % w), v) }
-                  .toMap
-
-                val dw = checkDiagonal(map, 1)
-                if (dw == 0) {
-                    val drw = checkDiagonal(map, -1)
-                    if (drw != 0)
-                        println("Reverse Diagonal")
-                    drw
-                } else {
-                    println("Diagonal")
-                    dw
-                }
-            } else {
-                println("Column")
-                cw
-            }
-        } else {
-            println("Row")
-            rw
-        }
     }
 
     def place(row: Int, player: Int): Boolean = {
