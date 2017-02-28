@@ -1,6 +1,6 @@
 import scala.collection.mutable
 import scala.io.StdIn
-import scala.util.Try
+import scala.util.{Random, Try}
 import collection.JavaConverters._
 
 /**
@@ -17,7 +17,7 @@ object ConnectFour {
                 case n if Try(n.toInt).toOption.exists(i => i >= 0 && i < 7) =>
                 val placed = board.place(n.toInt, if (player) 1 else 2)
                 if (!placed) {
-                    println("Invalid move.")
+                    println("Column full, try again.")
                 } else {
                     player = !player
                     val victor = board.victor
@@ -30,10 +30,35 @@ object ConnectFour {
 
                 board.show()
 
+                case "a" =>
+                    val scores = board.score().zipWithIndex
+                    val max = scores.maxBy(_._1)
+                    val maxes = scores.filter(_._1 == max._1)
+                    val choice = maxes(Random.nextInt(maxes.length))
+                    scores.sliding(7, 7).foreach(r => println(r.map(_._1).mkString(" ")))
+
+                    println(choice._2 % board.w)
+
+                    player = !player
+                    board.place(choice._2 % board.w, 2)
+
+                    board.show()
+                    val victor = board.victor
+                    if (victor != 0) {
+                        println(s"Player $victor wins!")
+                        board.show()
+                        sys.exit()
+                    }
+
                 case "h" =>
                     heuristic(board)
+                case "s" =>
+                    val scores = board.score()
+                    println("Here's the score for the current board for the next player.")
+                    scores.sliding(7, 7)
+                      .foreach(row => println(row.mkString(" ")))
                 case _ =>
-                ;
+
             }
         }
     }
@@ -102,9 +127,10 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
 
             var sum_r = 1
             var sum_c = 1
-            var sum_d = 1
+            var sum_d1 = 1
+            var sum_d2 = 1
 
-            for (i <- 1 to 3 if sum_r < dim & sum_c < dim & sum_d < dim) {
+            for (i <- 1 to 3 if sum_r < dim & sum_c < dim & sum_d1 < dim & sum_d2 < dim) {
                 val xy = indexToXY(last)
                 if (l) {
                     if (xy._1 - i >= 0) {
@@ -149,7 +175,7 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                 if (b) {
                     if (xy._1 - i >= 0 && xy._2 >= 0) {
                         if (list.get(xyToIndex(xy._1 - i, xy._2 - i)) == lastPlayer) {
-                            sum_d += 1
+                            sum_d1 += 1
                         } else {
                             b = false
                         }
@@ -160,7 +186,7 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                 if (f) {
                     if (xy._1 + i < w && xy._2 + i < h) {
                         if (list.get(xyToIndex(xy._1 + i, xy._2 + i)) == lastPlayer) {
-                            sum_d += 1
+                            sum_d1 += 1
                         } else {
                             f = false
                         }
@@ -171,7 +197,7 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                 if (bb) {
                     if (xy._1 - i >= 0 && xy._2 + i < h) {
                         if (list.get(xyToIndex(xy._1 - i, xy._2 + i)) == lastPlayer) {
-                            sum_d += 1
+                            sum_d2 += 1
                         } else {
                             bb = false
                         }
@@ -182,7 +208,7 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                 if (ff) {
                     if (xy._1 + i < w && xy._2 - i >= 0) {
                         if (list.get(xyToIndex(xy._1 + i, xy._2 - i)) == lastPlayer) {
-                            sum_d += 1
+                            sum_d2 += 1
                         } else {
                             ff = false
                         }
@@ -198,7 +224,7 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
             } else if (sum_c >= 4) {
                 println("Column")
                 lastPlayer
-            } else if (sum_d >= 4) {
+            } else if (sum_d1 >= 4 || sum_d2 >= 4) {
                 println("Diagonal")
                 lastPlayer
             } else {
@@ -206,6 +232,82 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
             }
         case None =>
             0
+    }
+
+    def score(): List[Int] = {
+        val map = list.asScala.zipWithIndex.map(_.swap).toMap
+        val nextplayer = if (lastPlayer == 1) 2 else 1
+
+        val validPlaces = list.asScala.zipWithIndex
+          .foldLeft(List.empty[Int]) { case (ls, (player, index)) =>
+              if (player == 0) {
+                  ls ++ (map.get(index + w) match {
+                      case Some(below) if below != 0 => List(nextplayer)
+                      case None => List(nextplayer)
+                      case _ => List(0)
+                  })
+              } else {
+                  ls ++ List(0)
+              }
+          }
+
+        val scores = validPlaces.zipWithIndex
+          .map { case (player, index) =>
+              if (player == nextplayer) {
+                  val xy = indexToXY(index)
+                  var l = true
+                  var r = true
+                  var d = true
+                  var sum_r = 1
+                  var sum_c = 1
+                  var in_r = 1
+                  var in_c = 1
+                  for (i <- 1 to dim) {
+                      if (l) {
+                          if (xy._1 - i >= 0) {
+                              if (map(xyToIndex(xy._1 - i, xy._2)) == player) {
+                                  sum_r += 1
+                              } else {
+                                  l = false
+                              }
+                          } else {
+                              l = false
+                          }
+                      }
+                      if (r) {
+                          if (xy._1 + i < w) {
+                              if (map(xyToIndex(xy._1 + i, xy._2)) == player) {
+                                  sum_r += 1
+                              } else {
+                                  r = false
+                              }
+                          } else {
+                              r = false
+                          }
+                      }
+                      if (d) {
+                          val xy2 = xyToIndex(xy._1, xy._2 + i)
+                          if (xy2 < w * h && list.get(xy2) == player) {
+                              sum_c += 1
+                          } else {
+                              d = false
+                          }
+                      }
+                  }
+                  sum_r + sum_c
+              } else {
+                  0
+              }
+          }
+
+        scores
+
+        // Debug
+        // show()
+        // validPlaces.sliding(7, 7)
+        //   .foreach { row => println(row.mkString(" ")) }
+        // scores.sliding(7, 7)
+        //   .foreach { row => println(row.mkString(" ")) }
     }
 
     def place(row: Int, player: Int): Boolean = {
