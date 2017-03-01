@@ -7,6 +7,9 @@ import collection.JavaConverters._
   * Created by Rick on 2/22/2017.
   */
 object ConnectFour {
+
+    val scoreR = raw"s ([12])".r
+
     def main(args: Array[String]): Unit = {
         val board = new ConnectBoard(7, 6)
         board.show()
@@ -35,72 +38,41 @@ object ConnectFour {
                     val max = scores.maxBy(_._1)
                     val maxes = scores.filter(_._1 == max._1)
                     val choice = maxes(Random.nextInt(maxes.length))
-                    scores.sliding(7, 7).foreach(r => println(r.map(_._1).mkString(" ")))
+                    scores.sliding(7, 7).foreach(r => println(r.map(_._1).map(e => "%1.1f".format(e)).mkString(" ")))
 
                     println(choice._2 % board.w)
 
+                    board.place(choice._2 % board.w, if (player) 1 else 2)
                     player = !player
-                    board.place(choice._2 % board.w, 2)
 
-                    board.show()
                     val victor = board.victor
                     if (victor != 0) {
                         println(s"Player $victor wins!")
                         board.show()
                         sys.exit()
+                    } else {
+                        board.show()
                     }
 
-                case "h" =>
-                    heuristic(board)
                 case "s" =>
                     val scores = board.score()
-                    println("Here's the score for the current board for the next player.")
+                    println("Here's the score for the current board for " + (if (player) "o" else "x"))
                     scores.sliding(7, 7)
-                      .foreach(row => println(row.mkString(" ")))
-                case _ =>
+                      .foreach(row => println(row.map(e => "%1.1f".format(e)).mkString(" ")))
+
+                case scoreR(strPl) =>
+                    val pl = strPl.toInt
+                    val scores = board.score(pl)
+                    println("Here's the score for the current board for " + (if (pl == 1) "o" else "x"))
+                    scores.sliding(7, 7)
+                      .foreach(row => println(row.map(e => "%1.1f".format(e)).mkString(" ")))
 
             }
         }
     }
 
-    def emptyNeighbors(xy: (Int, Int), map: Map[(Int, Int), Int]): List[(Int, Int)] = List(
-            (xy._1 - 1, xy._2) -> map.get(xy._1 - 1, xy._2),
-            (xy._1 + 1, xy._2) -> map.get(xy._1 + 1, xy._2),
-            (xy._1, xy._2 - 1) -> map.get(xy._1, xy._2 - 1),
-            (xy._1, xy._2 + 1) -> map.get(xy._1, xy._2 + 1),
-            (xy._1 - 1, xy._2 - 1) -> map.get(xy._1 - 1, xy._2 - 1),
-            (xy._1 + 1, xy._2 + 1) -> map.get(xy._1 + 1, xy._2 + 1),
-            (xy._1 - 1, xy._2 + 1) -> map.get(xy._1 - 1, xy._2 + 1),
-            (xy._1 + 1, xy._2 - 1) -> map.get(xy._1 + 1, xy._2 - 1)
-        ).foldLeft(List.empty[(Int, Int)]) { case (list, ((x, y), opt)) =>
-            opt match {
-                case Some(0) =>
-                    if (map.get(x, y + 1).getOrElse(3) != 0)
-                        list ++ List((x, y))
-                    else
-                        list
-                case _ =>
-                    list
-            }
-        }
+    def minmax(node: Node[ConnectBoard]): Unit = {
 
-    def heuristic(board: ConnectBoard): Int = {
-        val scores = mutable.Map((0 until board.w * board.h).map(i => board.indexToXY(i) -> 0):_*)
-        val map = board.list.asScala.zipWithIndex.map { case (v, idx) =>
-            board.indexToXY(idx) -> v.toInt
-        }.toMap
-        map.foreach { case ((x, y), player) =>
-            if (player == board.lastPlayer) {
-                emptyNeighbors((x, y), map).foreach(xy => scores(xy) += 1)
-            }
-        }
-        val hf = List.fill(13)('-').mkString("")
-        println(s"|$hf|" + {if (board.lastPlayer == 1) "o" else "x"})
-        scores.toList.map(e => board.xyToIndex(e._1) -> e._2).sortBy(_._1).sliding(7, 7)
-          .foreach(v => println(s"|${v.map(_._2).mkString("|")}|"))
-        println(s"|$hf|")
-
-        0
     }
 }
 
@@ -173,7 +145,7 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                     }
                 }
                 if (b) {
-                    if (xy._1 - i >= 0 && xy._2 >= 0) {
+                    if (xy._1 - i >= 0 && xy._2 - i >= 0) {
                         if (list.get(xyToIndex(xy._1 - i, xy._2 - i)) == lastPlayer) {
                             sum_d1 += 1
                         } else {
@@ -234,16 +206,15 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
             0
     }
 
-    def score(): List[Int] = {
+    def score(playerToScore: Int = if (lastPlayer == 1) 2 else 1): List[Double] = {
         val map = list.asScala.zipWithIndex.map(_.swap).toMap
-        val nextplayer = if (lastPlayer == 1) 2 else 1
 
         val validPlaces = list.asScala.zipWithIndex
           .foldLeft(List.empty[Int]) { case (ls, (player, index)) =>
               if (player == 0) {
                   ls ++ (map.get(index + w) match {
-                      case Some(below) if below != 0 => List(nextplayer)
-                      case None => List(nextplayer)
+                      case Some(below) if below != 0 => List(playerToScore)
+                      case None => List(playerToScore)
                       case _ => List(0)
                   })
               } else {
@@ -253,20 +224,51 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
 
         val scores = validPlaces.zipWithIndex
           .map { case (player, index) =>
-              if (player == nextplayer) {
+              if (player == playerToScore) {
                   val xy = indexToXY(index)
                   var l = true
                   var r = true
                   var d = true
-                  var sum_r = 1
-                  var sum_c = 1
+                  var u = true
+                  var b = true
+                  var f = true
+                  var bb = true
+                  var ff = true
+
+                  var sum_r = 1.0
+                  var sum_c = 1.0
+                  var sum_d1 = 0.0
+                  var sum_d2 = 0.0
                   var in_r = 1
                   var in_c = 1
+                  var in_d1 = 1
+                  var in_d2 = 1
                   for (i <- 1 to dim) {
                       if (l) {
                           if (xy._1 - i >= 0) {
-                              if (map(xyToIndex(xy._1 - i, xy._2)) == player) {
-                                  sum_r += 1
+                              val pl = map(xyToIndex(xy._1 - i, xy._2))
+                              if (pl == player) {
+                                  sum_r += 1.1
+                                  in_r += 1
+                              } else if (pl == 0) {
+                                  /* score based how many empty squares below. Doesn't work because validPlaces
+                                  var j = 1
+                                  var below = map.get(xyToIndex((xy._1 - i, xy._2 + j)))
+                                  while (below.getOrElse(-1) == 0) {
+                                      j += 1
+                                      below = map.get(xyToIndex(xy._1 - i, xy._2 + j))
+                                  }
+                                  sum_r += 0.9 / j
+                                  in_r += 1
+                                  */
+
+                                  map.get(xyToIndex(xy._1 - i, xy._2 + 1)) match {
+                                      case Some(below) if below != 0 =>
+                                          in_r += 1
+                                      case None =>
+                                          in_r += 1
+                                      case _ =>
+                                  }
                               } else {
                                   l = false
                               }
@@ -276,8 +278,18 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                       }
                       if (r) {
                           if (xy._1 + i < w) {
-                              if (map(xyToIndex(xy._1 + i, xy._2)) == player) {
-                                  sum_r += 1
+                              val pl = map(xyToIndex(xy._1 + i, xy._2))
+                              if (pl == player) {
+                                  in_r += 1
+                                  sum_r += 1.1
+                              } else if (pl == 0) {
+                                  map.get(xyToIndex(xy._1 + i, xy._2 + 1)) match {
+                                      case Some(below) if below != 0 =>
+                                          in_r += 1
+                                      case None =>
+                                          in_r += 1
+                                      case _ =>
+                                  }
                               } else {
                                   r = false
                               }
@@ -287,14 +299,115 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                       }
                       if (d) {
                           val xy2 = xyToIndex(xy._1, xy._2 + i)
-                          if (xy2 < w * h && list.get(xy2) == player) {
-                              sum_c += 1
+                          if (xy2 < w * h) {
+                              val pl = list.get(xy2)
+                              if (pl == player) {
+                                  in_c += 1
+                                  sum_c += 1
+                              } else if (pl == 0) {
+                                  in_c += 1
+                              } else {
+                                  d = false
+                              }
                           } else {
                               d = false
                           }
                       }
+                      if (u) {
+                          val xy2 = xyToIndex(xy._1, xy._2 - i)
+                          if (xy2 >= 0) {
+                              val pl = list.get(xy2)
+                              if (pl == 0) {
+                                  in_c += 1
+                              } else {
+                                  u = false
+                              }
+                          } else {
+                              u = false
+                          }
+                      }
+                      /*
+                      if (b) {
+                          if (xy._1 - i >= 0 && xy._2 - i >= 0) {
+                              val pl = list.get(xyToIndex(xy._1 - i, xy._2 - i))
+                              if (pl == lastPlayer) {
+                                  in_d1 += 1
+                                  sum_d1 += 0.5
+                              } else if (pl == 0) {
+                                  in_d1 += 1
+                              } else {
+                                  b = false
+                              }
+                          } else {
+                              b = false
+                          }
+                      }
+                      if (f) {
+                          if (xy._1 + i < w && xy._2 + i < h) {
+                              val pl = list.get(xyToIndex(xy._1 + i, xy._2 + i))
+                              if (pl == lastPlayer) {
+                                  in_d1 += 1
+                                  sum_d1 += 0.5
+                              } else if (pl == 0) {
+                                  in_d1 += 1
+                              } else {
+                                  f = false
+                              }
+                          } else {
+                              f = false
+                          }
+                      }
+                      if (bb) {
+                          if (xy._1 - i >= 0 && xy._2 + i < h) {
+                              val pl = list.get(xyToIndex(xy._1 - i, xy._2 + i))
+                              if (pl == lastPlayer) {
+                                  in_d2 += 1
+                                  sum_d2 += 0.5
+                              } else if (pl == 0) {
+                                  in_d2 += 1
+                              } else {
+                                  bb = false
+                              }
+                          } else {
+                              bb = false
+                          }
+                      }
+                      if (ff) {
+                          if (xy._1 + i < w && xy._2 - i >= 0) {
+                              val pl = list.get(xyToIndex(xy._1 + i, xy._2 - i))
+                              if (pl == lastPlayer) {
+                                  in_d2 += 1
+                                  sum_d2 += 0.5
+                              } else if (pl == 0) {
+                                  in_d2 += 1
+                              } else {
+                                  ff = false
+                              }
+                          } else {
+                              ff = false
+                          }
+                      }
+                      */
                   }
-                  sum_r + sum_c
+
+                  if (in_r < dim) {
+                      sum_r = 0
+                  }
+
+                  if (in_c < dim) {
+                      sum_c = 0
+                  }
+
+                  if (in_d1 < dim) {
+                      sum_d1 = 0
+                  }
+
+                  if (in_d2 < dim) {
+                      sum_d2 = 0
+                  }
+
+                  val sum = sum_r + sum_c + sum_d1 + sum_d2
+                  sum
               } else {
                   0
               }
@@ -346,4 +459,11 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
         .foreach(line => println(s"|${line.mkString("|")}|"))
         println(s"|$hf|")
     }
+}
+
+object Node {
+    var NUM_GENERATED = 0
+}
+class Node[A](val state: A, val parent: Option[A]) {
+
 }
