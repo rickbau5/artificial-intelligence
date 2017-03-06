@@ -80,6 +80,13 @@ object ConnectFour {
                     scores.sliding(7, 7)
                       .foreach(row => println(row.map(e => "%1.1f".format(e)).mkString(" ")))
 
+                case "next" =>
+                    val next = board.next
+                    next.zipWithIndex foreach { tup =>
+                        println(tup._2)
+                        tup._1.show()
+                    }
+
                 case "play" =>
                     println("HI! I'm Al, I'm going to play with myself ;)")
                     var victor = 0
@@ -138,13 +145,13 @@ object ConnectFour {
             }
         }
     }
-
-    def minmax(node: Node[ConnectBoard]): Unit = {
-
-    }
 }
 
-class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
+trait State {
+    def next: List[State]
+}
+
+class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
     val list = new java.util.ArrayList[Integer](w * h)
     (0 until w * h).foreach(_ => list.add(0))
 
@@ -278,10 +285,9 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
             (0, 0)
     }
 
-    def score(playerToScore: Int = if (lastPlayer == 1) 2 else 1): List[Double] = {
+    def validPlaces(playerToScore: Int): List[Int] = {
         val map = list.asScala.zipWithIndex.map(_.swap).toMap
-
-        val validPlaces = list.asScala.zipWithIndex
+        list.asScala.zipWithIndex
           .foldLeft(List.empty[Int]) { case (ls, (player, index)) =>
               if (player == 0) {
                   ls ++ (map.get(index + w) match {
@@ -293,8 +299,12 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
                   ls ++ List(0)
               }
           }
+    }
 
-        val scores = validPlaces.zipWithIndex
+    def score(playerToScore: Int = if (lastPlayer == 1) 2 else 1): List[Double] = {
+        val map = list.asScala.zipWithIndex.map(_.swap).toMap
+
+        val scores = validPlaces(playerToScore).zipWithIndex
           .map { case (player, index) =>
               if (player == playerToScore) {
                   val xy = indexToXY(index)
@@ -509,6 +519,7 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
             while (at + w < w * h && list.get(at + w) == 0) {
                 at += w
             }
+
             list.set(at, player)
             lastPlayer = player
 
@@ -535,11 +546,28 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) {
         .foreach(line => println(s"|${line.mkString("|")}|"))
         println(s"|$hf|")
     }
+
+    override def next: List[ConnectBoard] = {
+        val moves = validPlaces(if (lastPlayer == 2) 1 else 2).zipWithIndex.filter (_._1 != 0)
+        val boards = moves.map { case (_, index) =>
+            val board = new ConnectBoard(w, h, dim)
+            var i = 0
+            list.forEach { v =>
+                board.list.set(i, v)
+                i += 1
+            }
+
+            board.place(index % w, if (lastPlayer == 2) 1 else 2)
+            board
+        }
+
+        boards
+    }
 }
 
 object Node {
     var NUM_GENERATED = 0
 }
-class Node[A](val state: A, val parent: Option[A]) {
-
+class Node[A <: State](val state: A, val parent: Option[A]) {
+    lazy val children = state.next
 }
