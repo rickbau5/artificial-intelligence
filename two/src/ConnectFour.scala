@@ -81,9 +81,24 @@ object ConnectFour {
                     scores.sliding(7, 7)
                       .foreach(row => println(row.map(e => "%1.1f".format(e)).mkString(" ")))
 
+                case "show" =>
+                    board.show()
+
                 case "mm" =>
                     println(s"Minmax for $player")
-                    minmax(board, player)
+                    val ret = minmax(board, player)
+
+                    board.place(ret, player)
+                    player_b = !player_b
+
+                    val victor = board.victor
+                    if (victor._1 != 0) {
+                        println(s"Player $victor wins!")
+                        board.show()
+                        sys.exit()
+                    } else {
+                        board.show()
+                    }
 
                 case "play" =>
                     println("HI! I'm Al, I'm going to play with myself ;)")
@@ -144,20 +159,26 @@ object ConnectFour {
         }
     }
 
-    def utility(board: ConnectBoard, player: Int): Int = board.victor match {
-        case (1, _) if player == 1 =>
-            1
-        case (2, _) if player == 2 =>
-            -1
-        case _ =>
-            0
+    def utility(board: ConnectBoard, player: Int): Int = {
+        val victor = board.victor
+        val util = victor match {
+            case (0, _) => 0
+            case (pl, _) if pl == player =>
+                1
+            case (pl, _) if pl != player =>
+                -1
+            case _ =>
+                0
+        }
+        util
     }
 
-    def minmax(start: ConnectBoard, player: Int): Unit = {
+    def minmax(start: ConnectBoard, player: Int): Int = {
         def max(node: Node[ConnectBoard])(depth: Int): Double = {
             val next = node.state.next
             if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
-                utility(node.state, player)
+                val util = utility(node.state, player)
+                util
             } else {
                 var v = Double.MinValue
                 next foreach { child =>
@@ -173,7 +194,8 @@ object ConnectFour {
         def min(node: Node[ConnectBoard])(depth: Int): Double = {
             val next = node.state.next
             if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
-                utility(node.state, 1 + player % 2)
+                val util = utility(node.state, player)
+                util
             } else {
                 var v = Double.MaxValue
                 next foreach { child =>
@@ -186,8 +208,16 @@ object ConnectFour {
             }
         }
 
-        val ret = max(new Node(start, None))(3)
-        println(ret)
+        val rootNode = new Node(start, None)
+
+        val results = start.nextWithAction.map { case (move, board) =>
+            move -> min(new Node(board, Option(rootNode)))(4)
+        }.sortBy(_._1)
+        val top = results.maxBy(_._2)
+        val tiedResults = results.filter(_._2 == top._2)
+        val choice = tiedResults(Random.nextInt(tiedResults.length))
+        results foreach println
+        choice._1
     }
 }
 
@@ -313,13 +343,10 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
             }
 
             if (sum_r >= 4) {
-                println("Row")
                 (lastPlayer, last)
             } else if (sum_c >= 4) {
-                println("Column")
                 (lastPlayer, last)
             } else if (sum_d1 >= 4 || sum_d2 >= 4) {
-                println("Diagonal")
                 (lastPlayer, last)
             } else {
                 (0, last)
@@ -606,11 +633,28 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
 
         boards
     }
+
+    def nextWithAction: List[(Int, ConnectBoard)] = {
+        val moves = validPlaces(if (lastPlayer == 2) 1 else 2).zipWithIndex.filter (_._1 != 0)
+        val boards = moves.map { case (_, index) =>
+            val board = new ConnectBoard(w, h, dim)
+            var i = 0
+            list.forEach { v =>
+                board.list.set(i, v)
+                i += 1
+            }
+
+            board.place(index % w, if (lastPlayer == 2) 1 else 2)
+            (index % w, board)
+        }
+
+        boards
+    }
 }
 
 object Node {
     var NUM_GENERATED = 0
 }
 class Node[A <: State](val state: A, val parent: Option[Node[A]])(implicit ct: ClassTag[A]) {
-    lazy val children = state.next
+    lazy val children = state.next.map(c => new Node(c.asInstanceOf[A], Option(this)))
 }
