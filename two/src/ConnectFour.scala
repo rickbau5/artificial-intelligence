@@ -2,6 +2,7 @@ import scala.collection.mutable
 import scala.io.StdIn
 import scala.util.{Random, Try}
 import collection.JavaConverters._
+import scala.reflect.ClassTag
 
 /**
   * Created by Rick on 2/22/2017.
@@ -80,12 +81,9 @@ object ConnectFour {
                     scores.sliding(7, 7)
                       .foreach(row => println(row.map(e => "%1.1f".format(e)).mkString(" ")))
 
-                case "next" =>
-                    val next = board.next
-                    next.zipWithIndex foreach { tup =>
-                        println(tup._2)
-                        tup._1.show()
-                    }
+                case "mm" =>
+                    println(s"Minmax for $player")
+                    minmax(board, player)
 
                 case "play" =>
                     println("HI! I'm Al, I'm going to play with myself ;)")
@@ -145,12 +143,57 @@ object ConnectFour {
             }
         }
     }
+
+    def utility(board: ConnectBoard, player: Int): Int = board.victor match {
+        case (1, _) if player == 1 =>
+            1
+        case (2, _) if player == 2 =>
+            -1
+        case _ =>
+            0
+    }
+
+    def minmax(start: ConnectBoard, player: Int): Unit = {
+        def max(node: Node[ConnectBoard])(depth: Int): Double = {
+            val next = node.state.next
+            if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
+                utility(node.state, player)
+            } else {
+                var v = Double.MinValue
+                next foreach { child =>
+                    val res = min(new Node(child, Option(node)))(depth - 1)
+                    if (res > v) {
+                        v = res
+                    }
+                }
+                v
+            }
+        }
+
+        def min(node: Node[ConnectBoard])(depth: Int): Double = {
+            val next = node.state.next
+            if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
+                utility(node.state, 1 + player % 2)
+            } else {
+                var v = Double.MaxValue
+                next foreach { child =>
+                    val res = max(new Node(child, Option(node)))(depth - 1)
+                    if (res < v) {
+                        v = res
+                    }
+                }
+                v
+            }
+        }
+
+        val ret = max(new Node(start, None))(3)
+        println(ret)
+    }
 }
 
 trait State {
     def next: List[State]
 }
-
 class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
     val list = new java.util.ArrayList[Integer](w * h)
     (0 until w * h).foreach(_ => list.add(0))
@@ -568,6 +611,6 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
 object Node {
     var NUM_GENERATED = 0
 }
-class Node[A <: State](val state: A, val parent: Option[A]) {
+class Node[A <: State](val state: A, val parent: Option[Node[A]])(implicit ct: ClassTag[A]) {
     lazy val children = state.next
 }
