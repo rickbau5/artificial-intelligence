@@ -11,13 +11,87 @@ object ConnectFour {
 
     val scoreR = raw"s ([12])".r
 
+    def getInput[A](prompt: String = "")(partialFunction: PartialFunction[String, A]): A = Try {
+        val input = StdIn.readLine(prompt)
+        partialFunction.apply(input)
+    }.getOrElse(getInput(prompt)(partialFunction))
+
+    val choiceR = raw"([0-9])".r
+
     def main(args: Array[String]): Unit = {
         val board = new ConnectBoard(7, 6)
+
+        println(
+            """Welcome to Connect Four!
+              | Select the player that will go first (1, 2)
+            """.stripMargin)
+        val player = getInput("Player: ") {
+            case "1" => 1
+            case "2" => 2
+        }
+        println(s"Player $player (${if (player == 1) "o" else "x"}) will be controlled by you and go first")
+        println("Have fun! And good luck against Al!")
         board.show()
 
-        var player_b = true
-        def player = if (player_b) 1 else 2
-        while (true) {
+        var play = true
+
+        val aiPlayer = 1 + player % 2
+
+        do {
+            var playerMoved = getInput("> ") {
+                case choiceR(numStr) =>
+                    val choice = numStr.toInt
+                    val placed = board.place(choice, player)
+                    if (!placed) {
+                        println("Column full, try again.")
+                        false
+                    } else {
+                        true
+                    }
+
+                case "show" =>
+                    board.show()
+                    false
+
+                case "quit" =>
+                    println("Bye!")
+                    false
+            }
+
+            if (playerMoved) {
+                board.show()
+                val (victor, _) = board.victor
+                if (victor != 0) {
+                    println("Congratulations, you win!")
+                    play = false
+                } else {
+                    println("Al's turn.")
+                    val ret = minmax(board, aiPlayer, 4) { case (b, pl) =>
+                        val ret = b.score(pl).max
+                        if (pl != b.lastPlayer) {
+                            -ret
+                        } else {
+                            ret
+                        }
+                    }
+
+                    board.place(ret, aiPlayer)
+                    board.show()
+
+                    val (victor, _) = board.victor
+                    if (victor != 0) {
+                        println("Sorry, you lost! Al wins this time")
+                        play = false
+                    }
+                }
+            }
+        } while (play)
+
+
+        //var player_b = true
+        //def player = if (player_b) 1 else 2
+        //while (true) {
+            /*
             StdIn.readLine("> ") match {
                 case n if Try(n.toInt).toOption.exists(i => i >= 0 && i < 7) =>
                 val placed = board.place(n.toInt, player)
@@ -66,8 +140,8 @@ object ConnectFour {
                     board.place(choice._2 % board.w, player)
                     player_b = !player_b
 
-                    val victor = board.victor
-                    if (victor._1 != 0) {
+                    val (victor, _) = board.victor
+                    if (victor != 0) {
                         println(s"Player $victor wins!")
                         board.show()
                         sys.exit()
@@ -86,7 +160,15 @@ object ConnectFour {
 
                 case "mm" =>
                     println(s"Minmax for $player")
-                    val ret = minmax(board, player)
+                    // val ret = minmax(board, player)(utility)
+                    val ret = minmax(board, player){ case (b, pl) =>
+                        val ret = b.score(pl).max
+                        if (pl != b.lastPlayer) {
+                            -ret
+                        } else {
+                            ret
+                        }
+                    }
 
                     board.place(ret, player)
                     player_b = !player_b
@@ -156,28 +238,29 @@ object ConnectFour {
                 case _ =>
                     println("Invalid command.")
             }
-        }
+            */
+        //}
     }
 
-    def utility(board: ConnectBoard, player: Int): Int = {
+    def utility(board: ConnectBoard, player: Int): Double = {
         val victor = board.victor
         val util = victor match {
-            case (0, _) => 0
+            case (0, _) => 0.0
             case (pl, _) if pl == player =>
-                1
+                1.0
             case (pl, _) if pl != player =>
-                -1
+                -1.0
             case _ =>
-                0
+                0.0
         }
         util
     }
 
-    def minmax(start: ConnectBoard, player: Int): Int = {
+    def minmax(start: ConnectBoard, player: Int, lookAhead: Int)(func: (ConnectBoard, Int) => Double): Int = {
         def max(node: Node[ConnectBoard])(depth: Int): Double = {
             val next = node.state.next
             if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
-                val util = utility(node.state, player)
+                val util = func(node.state, player)
                 util
             } else {
                 var v = Double.MinValue
@@ -194,7 +277,7 @@ object ConnectFour {
         def min(node: Node[ConnectBoard])(depth: Int): Double = {
             val next = node.state.next
             if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
-                val util = utility(node.state, player)
+                val util = func(node.state, player)
                 util
             } else {
                 var v = Double.MaxValue
@@ -211,12 +294,13 @@ object ConnectFour {
         val rootNode = new Node(start, None)
 
         val results = start.nextWithAction.map { case (move, board) =>
-            move -> min(new Node(board, Option(rootNode)))(4)
+            move -> min(new Node(board, Option(rootNode)))(lookAhead)
         }.sortBy(_._1)
         val top = results.maxBy(_._2)
         val tiedResults = results.filter(_._2 == top._2)
         val choice = tiedResults(Random.nextInt(tiedResults.length))
-        results foreach println
+        results foreach (tup => print("%.1f ".format(tup._2)))
+        println
         choice._1
     }
 }
@@ -562,7 +646,10 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
                       sum_d2 = 0
                   }
 
-                  val sum = sum_r + sum_c + sum_d1 + sum_d2
+                  var sum = sum_r + sum_c + sum_d1 + sum_d2
+                  if (sum_r >= 4 || sum_c >= 4) {
+                      sum += 100
+                  }
                   sum
               } else {
                   0
@@ -570,13 +657,6 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
           }
 
         scores
-
-        // Debug
-        // show()
-        // validPlaces.sliding(7, 7)
-        //   .foreach { row => println(row.mkString(" ")) }
-        // scores.sliding(7, 7)
-        //   .foreach { row => println(row.mkString(" ")) }
     }
 
     def place(row: Int, player: Int): Boolean = {
@@ -656,5 +736,6 @@ object Node {
     var NUM_GENERATED = 0
 }
 class Node[A <: State](val state: A, val parent: Option[Node[A]])(implicit ct: ClassTag[A]) {
+    Node.NUM_GENERATED += 1
     lazy val children = state.next.map(c => new Node(c.asInstanceOf[A], Option(this)))
 }
