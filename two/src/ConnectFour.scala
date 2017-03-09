@@ -30,7 +30,15 @@ object ConnectFour {
             case "2" => 2
         }
         println(s"Player $player (${if (player == 1) "o" else "x"}) will be controlled by you and go first")
-        println("Have fun! And good luck against Al!")
+        println(
+            """ Enter a number 0-6 indicating the column to place the piece.
+              | 0 is the furthest left column, 6 is the furthest right.
+              | Have fun! And good luck against Al!
+              | Press enter to begin playing.
+            """.stripMargin)
+
+        StdIn.readLine()
+
         board.show()
 
         var play = true
@@ -66,7 +74,8 @@ object ConnectFour {
                     play = false
                 } else {
                     println("Al's turn.")
-                    val ret = minmax(board, aiPlayer, 4) { case (b, pl) =>
+//                    val ret = minmax(board, aiPlayer, 4) { case (b, pl) =>
+                    val ret = alphabetaSearch(board, aiPlayer, 7) { case (b, pl) =>
                         val ret = b.score(pl).max
                         if (pl != b.lastPlayer) {
                             -ret
@@ -86,160 +95,6 @@ object ConnectFour {
                 }
             }
         } while (play)
-
-
-        //var player_b = true
-        //def player = if (player_b) 1 else 2
-        //while (true) {
-            /*
-            StdIn.readLine("> ") match {
-                case n if Try(n.toInt).toOption.exists(i => i >= 0 && i < 7) =>
-                val placed = board.place(n.toInt, player)
-                if (!placed) {
-                    println("Column full, try again.")
-                } else {
-                    player_b = !player_b
-                    val (victor, _) = board.victor
-                    if (victor != 0) {
-                        println(s"Player $victor wins!")
-                        board.show()
-                        sys.exit()
-                    }
-                }
-
-                board.show()
-
-                case "a" =>
-                    def choose(pl: Int = 2, _print: Boolean = false): (Double, Int) = {
-                        val scores = board.score(pl).zipWithIndex
-                        val max = scores.maxBy(_._1)
-                        val maxes = scores.filter(_._1 == max._1)
-
-                        if (_print) {
-                            scores.sliding(7, 7)
-                              .foreach(r => println(r.map(_._1).map(e => "%1.1f".format(e)).mkString(" ")))
-                        }
-                        maxes(Random.nextInt(maxes.length))
-                    }
-
-                    val choiceActive = choose(pl = player, _print = true)
-                    val choiceOther = choose(pl = if (player == 1) 2 else 1)
-                    println(choiceOther._2 % board.w)
-
-                    val choice = if (choiceActive._1 < choiceOther._1) {
-                        println("Player has a higher score, going to disrupt.")
-                        board.score(if (player == 1) 2 else 1)
-                          .sliding(7, 7)
-                          .foreach(row => println(row.map(v => "%1.1f".format(v)).mkString(" ")))
-
-                        choiceOther
-                    } else {
-                        choiceActive
-                    }
-
-                    board.place(choice._2 % board.w, player)
-                    player_b = !player_b
-
-                    val (victor, _) = board.victor
-                    if (victor != 0) {
-                        println(s"Player $victor wins!")
-                        board.show()
-                        sys.exit()
-                    } else {
-                        board.show()
-                    }
-
-                case "s" =>
-                    val scores = board.score()
-                    println("Here's the score for the current board for " + (if (player_b) "o" else "x"))
-                    scores.sliding(7, 7)
-                      .foreach(row => println(row.map(e => "%1.1f".format(e)).mkString(" ")))
-
-                case "show" =>
-                    board.show()
-
-                case "mm" =>
-                    println(s"Minmax for $player")
-                    // val ret = minmax(board, player)(utility)
-                    val ret = minmax(board, player){ case (b, pl) =>
-                        val ret = b.score(pl).max
-                        if (pl != b.lastPlayer) {
-                            -ret
-                        } else {
-                            ret
-                        }
-                    }
-
-                    board.place(ret, player)
-                    player_b = !player_b
-
-                    val victor = board.victor
-                    if (victor._1 != 0) {
-                        println(s"Player $victor wins!")
-                        board.show()
-                        sys.exit()
-                    } else {
-                        board.show()
-                    }
-
-                case "play" =>
-                    println("HI! I'm Al, I'm going to play with myself ;)")
-                    var victor = 0
-                    while (victor == 0) {
-                        def choose(pl: Int = 2, _print: Boolean = false): (Double, Int) = {
-                            val scores = board.score(pl).zipWithIndex
-                            val max = scores.maxBy(_._1)
-                            val maxes = scores.filter(_._1 == max._1)
-
-                            if (_print) {
-                                scores.sliding(7, 7)
-                                  .foreach(r => println(r.map(_._1).map(e => "%1.1f".format(e)).mkString(" ")))
-                            }
-                            maxes(Random.nextInt(maxes.length))
-                        }
-
-                        val choiceActive = choose(pl = player, _print = true)
-                        val choiceOther = choose(pl = if (player == 1) 2 else 1)
-                        println(choiceOther._2 % board.w)
-
-                        val choice = if (choiceActive._1 < choiceOther._1) {
-                            println("Player has a higher score, going to disrupt.")
-                            board.score(if (player == 1) 2 else 1)
-                              .sliding(7, 7)
-                              .foreach(row => println(row.map(v => "%1.1f".format(v)).mkString(" ")))
-
-                            choiceOther
-                        } else {
-                            choiceActive
-                        }
-
-                        board.place(choice._2 % board.w, player)
-                        player_b = !player_b
-
-                        victor = board.victor._1
-                        if (victor != 0) {
-                            println(s"Player $victor wins!")
-                            board.show()
-                            sys.exit()
-                        } else {
-                            board.show()
-                        }
-
-                        Thread.sleep(1700)
-                    }
-
-                case scoreR(strPl) =>
-                    val pl = strPl.toInt
-                    val scores = board.score(pl)
-                    println("Here's the score for the current board for " + (if (pl == 1) "o" else "x"))
-                    scores.sliding(7, 7)
-                      .foreach(row => println(row.map(e => "%1.1f".format(e)).mkString(" ")))
-
-                case _ =>
-                    println("Invalid command.")
-            }
-            */
-        //}
     }
 
     def utility(board: ConnectBoard, player: Int): Double = {
@@ -256,6 +111,65 @@ object ConnectFour {
         util
     }
 
+    def alphabetaSearch(start: ConnectBoard, player: Int, lookAhead: Int)(func: (ConnectBoard, Int) => Double): Int = {
+        def max(node: Node[ConnectBoard], _alpha: Double, beta: Double)(depth: Int): Double = {
+            var alpha = _alpha
+            val next = node.state.next
+
+            if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
+                val util = func(node.state, player)
+                util
+            } else {
+                var v = Double.NegativeInfinity
+                next foreach { child =>
+                    val res = min(new Node(child, Option(node)), alpha, beta)(depth - 1)
+                    if (res > v) {
+                        v = res
+                    }
+                    if (v >= beta) {
+                        return v
+                    }
+                    alpha = if (alpha > v) alpha else v
+                }
+                v
+            }
+        }
+
+        def min(node: Node[ConnectBoard], alpha: Double, _beta: Double)(depth: Int): Double = {
+            var beta = _beta
+            val next = node.state.next
+
+            if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
+                val util = func(node.state, player)
+                util
+            } else {
+                var v = Double.PositiveInfinity
+                next foreach { child =>
+                    val res = max(new Node(child, Option(node)), alpha, beta)(depth - 1)
+                    if (res < v) {
+                        v = res
+                    }
+                    if (v <= alpha) {
+                        return v
+                    }
+                    beta = if (beta < v) beta else v
+                }
+                v
+            }
+        }
+
+        val rootNode = new Node(start, None)
+
+        val results = start.nextWithAction.map { case (move, board) =>
+            move -> min(new Node(board, Option(rootNode)), Double.NegativeInfinity, Double.PositiveInfinity)(lookAhead)
+        }.sortBy(_._1)
+        val top = results.maxBy(_._2)
+        val tiedResults = results.filter(_._2 == top._2)
+        val choice = tiedResults(Random.nextInt(tiedResults.length))
+        results foreach (tup => print("%.1f ".format(tup._2)))
+        println
+        choice._1
+    }
     def minmax(start: ConnectBoard, player: Int, lookAhead: Int)(func: (ConnectBoard, Int) => Double): Int = {
         def max(node: Node[ConnectBoard])(depth: Int): Double = {
             val next = node.state.next
