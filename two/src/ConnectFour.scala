@@ -1,6 +1,8 @@
+import java.io.FileOutputStream
+
 import scala.collection.mutable
 import scala.io.StdIn
-import scala.util.{Random, Try}
+import scala.util.{Failure, Random, Success, Try}
 import collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -14,9 +16,39 @@ object ConnectFour {
     def getInput[A](prompt: String = "")(partialFunction: PartialFunction[String, A]): A = Try {
         val input = StdIn.readLine(prompt)
         partialFunction.apply(input)
-    }.getOrElse(getInput(prompt)(partialFunction))
+    }.getOrElse(getInput("Unrecognized input.\n" + prompt)(partialFunction))
 
     val choiceR = raw"([0-9])".r
+    val scoreR = raw"s ([12])".r
+    val fileR = raw"file (.*)".r
+
+    def playWithAi(board: ConnectBoard, player: Int, aiPlayer: Int): Unit = {
+        var _aiPlay = true
+        var rounds = 0
+        while (_aiPlay) {
+            println(s"Round $rounds.")
+            def _play(pl: Int): Int = {
+                val move = minmax_AlphaBeta(board, pl, 6)(evaluationFunction)
+                board.place(move, pl)
+                board.show()
+                board.victor._1
+            }
+            val pA = _play(player)
+            if (pA != 0) {
+                println(s"Player ${if (player == 1) "o" else "x"} wins!")
+                _aiPlay = false
+            } else {
+                val pB = _play(aiPlayer)
+                if (pB != 0) {
+                    println(s"Player ${if (aiPlayer == 1) "o" else "x"} wins!")
+                    _aiPlay = false
+                }
+            }
+            rounds += 1
+        }
+
+        println("Number of rounds until win: " + rounds)
+    }
 
     def main(args: Array[String]): Unit = {
         val board = new ConnectBoard(7, 6)
@@ -46,7 +78,7 @@ object ConnectFour {
         val aiPlayer = 1 + player % 2
 
         do {
-            var playerMoved = getInput("> ") {
+            val playerMoved = getInput("> ") {
                 case choiceR(numStr) =>
                     val choice = numStr.toInt
                     val placed = board.place(choice, player)
@@ -61,6 +93,36 @@ object ConnectFour {
                     board.show()
                     false
 
+                case scoreR(str) =>
+                    val playerToScore = Try(str.trim.toInt).getOrElse(board.nextPlayer)
+                    val score = board.score(playerToScore)
+                    println("Score for " + (if (playerToScore == 1) "o" else "x"))
+                    score.sliding(7, 7)
+                      .foreach(line => println(line.map(e => "%.1f".format(e)).mkString(" ")))
+                    false
+
+                case "play" =>
+                    playWithAi(board, player, aiPlayer)
+
+                    println("Bye!")
+                    sys.exit(0)
+
+                case fileR(fileName) =>
+                    Try(new FileOutputStream(fileName)) match {
+                        case Success(fos) =>
+                            println(s"Successfully opened $fileName, beginning playing.")
+                            Console.withOut(fos) {
+                                playWithAi(board, player, aiPlayer)
+                            }
+                            println("Done.")
+                            println("Bye!")
+                            sys.exit(0)
+
+                        case Failure(ex) =>
+                            ex.printStackTrace()
+                            false
+                    }
+
                 case "debug" =>
                     DEBUG_ENABLED = !DEBUG_ENABLED
                     if (DEBUG_ENABLED) {
@@ -72,6 +134,7 @@ object ConnectFour {
 
                 case "quit" =>
                     println("Bye!")
+                    play = false
                     false
             }
 
@@ -83,8 +146,7 @@ object ConnectFour {
                     play = false
                 } else {
                     println("Al's turn.")
-//                    val ret = minmax(board, aiPlayer, 4) { case (b, pl) =>
-                    val ret = alphabetaSearch(board, aiPlayer, 6) { case (b, pl) =>
+                    val move = minmax_AlphaBeta(board, aiPlayer, 6) { case (b, pl) =>
                         val ret = b.score(pl).max
                         if (pl != b.lastPlayer) {
                             -ret
@@ -93,7 +155,7 @@ object ConnectFour {
                         }
                     }
 
-                    board.place(ret, aiPlayer)
+                    board.place(move, aiPlayer)
                     board.show()
 
                     val (victor, _) = board.victor
@@ -104,6 +166,15 @@ object ConnectFour {
                 }
             }
         } while (play)
+    }
+
+    def evaluationFunction(board: ConnectBoard, player: Int ): Double = {
+        val ret = board.score(player).max
+        if (player != board.lastPlayer) {
+            -ret
+        } else {
+            ret
+        }
     }
 
     def utility(board: ConnectBoard, player: Int): Double = {
@@ -120,12 +191,35 @@ object ConnectFour {
         util
     }
 
-    def alphabetaSearch(start: ConnectBoard, player: Int, lookAhead: Int)(func: (ConnectBoard, Int) => Double): Int = {
+    /**
+      * Minmax algorithm with Alpha-Beta pruning rolled in. This takes a given board,
+      * the current player, the number of moves to look ahead and a utility/evaluation
+      * function. Will return the best move to make given these parameters.
+      *
+      * It takes into account blocking an immediate winning move of the opponent, and
+      * taking an immediate winning move for the current player if multiple paths to
+      * wins exist.
+      *
+      * @param start the starting board
+      * @param player the player
+      * @param lookAhead number of "moves" to look ahead
+      * @param func utility/evaluation function (ConnectBoard, Int) => Double
+      * @return the row to place the next piece in
+      */
+    def minmax_AlphaBeta(start: ConnectBoard, player: Int, lookAhead: Int)(func: (ConnectBoard, Int) => Double): Int = {
         var NODES_EXAMINED = 0
+        var BRANCHES_PRUNED = 0
+        var BRANCHES = 0L
+        var LEVELS = 0L
         def max(node: Node[ConnectBoard], _alpha: Double, beta: Double)(depth: Int): Double = {
             NODES_EXAMINED += 1
             var alpha = _alpha
             val next = node.state.next
+              //.sortBy(board => board.score(player).max)
+              //.reverse
+
+            BRANCHES += next.length.toLong
+            LEVELS += 1L
 
             if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
                 val util = func(node.state, player)
@@ -140,7 +234,13 @@ object ConnectFour {
                     if (v >= beta) {
                         return v
                     }
-                    alpha = if (alpha > v) alpha else v
+                    alpha = if (alpha > v) {
+                        BRANCHES_PRUNED += 1
+                        alpha
+                    } else {
+                        v
+                    }
+
                 }
                 v
             }
@@ -150,6 +250,10 @@ object ConnectFour {
             NODES_EXAMINED += 1
             var beta = _beta
             val next = node.state.next
+              //.sortBy(board => board.score(1 + player % 2).max)
+
+            BRANCHES += next.length.toLong
+            LEVELS += 1L
 
             if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
                 val util = func(node.state, player)
@@ -164,7 +268,10 @@ object ConnectFour {
                     if (v <= alpha) {
                         return v
                     }
-                    beta = if (beta < v) beta else v
+                    beta = if (beta < v) {
+                        BRANCHES_PRUNED += 1
+                        beta
+                    } else v
                 }
                 v
             }
@@ -172,95 +279,71 @@ object ConnectFour {
 
         val rootNode = new Node(start, None)
 
+        val startMs = System.currentTimeMillis()
         val results = start.nextWithAction.map { case (move, board) =>
             (move, min(new Node(board, Option(rootNode)), Double.NegativeInfinity, Double.PositiveInfinity)(lookAhead), board)
         }.sortBy(_._1)
+        val endMs = System.currentTimeMillis()
 
         val top = results.maxBy(_._2)
         val tiedResults = results.filter(_._2 == top._2)
         val choice = tiedResults(Random.nextInt(tiedResults.length))
+          ._1
 
-        /* If there's a winning move, take it immediately (some cases it won't take it immediately) */
-        val temp = results.map(_._3.victor)
-        debug(println(temp))
-        val best = temp
+        val winningMove = results.map(_._3.victor)
           .find(_._1 == player)
           .map(_._2 % start.w)
-          .getOrElse(choice._1)
 
-        debug {
-            println(s"Examined $NODES_EXAMINED nodes.")
-            results foreach (tup => print("%.1f ".format(tup._2)))
-            println
-            if (best != choice._1)
-                println("Found a different move to take to win")
-        }
-
-        // If the opponent can win for sure, ensure that we take that move!
-        /*
-        start.validPlaces(1 + player % 2).zipWithIndex
+        val nextPlayerMoveResults = start.validPlaces(1 + player % 2).zipWithIndex
           .filter(_._1 != 0.0)
-          .map { case (pl, index) =>
+          .map { case (pl, idx) =>
               val board = start.copy()
-              board.place(index % board.w, pl)
+              board.place(idx % board.w, pl)
               board.victor
           }
-          .find(_._1 == 1 + player % 2)
-          .map(_._1)
-          .getOrElse(best)
-          */
 
-        best
-    }
+        val blockingMove = nextPlayerMoveResults.find(_._1 != 0)
+            .map(_._2 % start.w)
 
-    def minmax(start: ConnectBoard, player: Int, lookAhead: Int)(func: (ConnectBoard, Int) => Double): Int = {
-        def max(node: Node[ConnectBoard])(depth: Int): Double = {
-            val next = node.state.next
-            if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
-                val util = func(node.state, player)
-                util
-            } else {
-                var v = Double.MinValue
-                next foreach { child =>
-                    val res = min(new Node(child, Option(node)))(depth - 1)
-                    if (res > v) {
-                        v = res
-                    }
-                }
-                v
-            }
+        debug {
+            println("Time elapsed: %.3f".format((endMs - startMs) / 1000.0))
+            println(s"Examined $NODES_EXAMINED nodes.")
+            println(s"Pruned $BRANCHES_PRUNED branches.")
+            println("Average branching factor (without pruning): %.2f".format(BRANCHES / LEVELS.toDouble))
+
+            print("Move scores:\n ")
+            results foreach (tup => print("%.1f ".format(tup._2)))
+            println
+
+            println("Next winning moves for both sides:")
+
+            val myWinningMoves = results.map(_._3.victor)
+              .map { case (w, i) => (w, i % start.w) }
+            val opponentWinningMoves = nextPlayerMoveResults.map(tup => (tup._1, tup._2 % start.w))
+
+            (myWinningMoves ++ opponentWinningMoves).groupBy(_._2)
+              .map { case (idx, list) => idx -> list.map(_._1) }
+              .toList.sortBy(_._1)
+              .foreach { case (idx, wins) =>
+                  println(s"$idx -> ${wins.mkString(",")}")
+              }
+
+            println("Algo: " + choice)
+            println("Winning: " + winningMove)
+            println("Blocking: " + blockingMove)
         }
 
-        def min(node: Node[ConnectBoard])(depth: Int): Double = {
-            val next = node.state.next
-            if (depth == 0 || next.isEmpty || node.state.victor._1 != 0) {
-                val util = func(node.state, player)
-                util
-            } else {
-                var v = Double.MaxValue
-                next foreach { child =>
-                    val res = max(new Node(child, Option(node)))(depth - 1)
-                    if (res < v) {
-                        v = res
-                    }
-                }
-                v
-            }
-        }
-
-        val rootNode = new Node(start, None)
-
-        val results = start.nextWithAction.map { case (move, board) =>
-            move -> min(new Node(board, Option(rootNode)))(lookAhead)
-        }.sortBy(_._1)
-        val top = results.maxBy(_._2)
-        val tiedResults = results.filter(_._2 == top._2)
-        val choice = tiedResults(Random.nextInt(tiedResults.length))
-        results foreach (tup => print("%.1f ".format(tup._2)))
-        println
-        choice._1
+        /* Take the winning move first if there is, then blocking move, then algo's choice */
+        winningMove.getOrElse(blockingMove.getOrElse(choice))
     }
 
+    /**
+      * Execute 'func' if debug is enabled
+      *
+      * @param func
+      * @tparam A
+      * @return
+      */
     def debug[A](func: => A): Any = if (DEBUG_ENABLED) func
 }
 
@@ -268,6 +351,9 @@ trait State {
     def next: List[State]
 }
 class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
+    private var _cachedScore = Option.empty[List[Double]]
+    def isScoreCached = _cachedScore.isDefined
+
     val list = new java.util.ArrayList[Integer](w * h)
     (0 until w * h).foreach(_ => list.add(0))
 
@@ -277,7 +363,10 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
     def indexToXY(idx: Int): (Int, Int) = (idx % w, idx / w)
     def xyToIndex(xy: (Int, Int)): Int = xy._2 * w + xy._1
 
+    def nextPlayer = 1 + lastPlayer % 2
+
     /**
+      * Return the winner for the board.
       *
       * @return (winning player [0, 1, 2], index)
       */
@@ -398,14 +487,20 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
             (0, 0)
     }
 
-    def validPlaces(playerToScore: Int): List[Int] = {
+    /**
+      * Return the valid places where a piece can be.
+      *
+      * @param player
+      * @return
+      */
+    def validPlaces(player: Int): List[Int] = {
         val map = list.asScala.zipWithIndex.map(_.swap).toMap
         list.asScala.zipWithIndex
-          .foldLeft(List.empty[Int]) { case (ls, (player, index)) =>
-              if (player == 0) {
+          .foldLeft(List.empty[Int]) { case (ls, (pl, index)) =>
+              if (pl == 0) {
                   ls ++ (map.get(index + w) match {
-                      case Some(below) if below != 0 => List(playerToScore)
-                      case None => List(playerToScore)
+                      case Some(below) if below != 0 => List(player)
+                      case None => List(player)
                       case _ => List(0)
                   })
               } else {
@@ -414,7 +509,10 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
           }
     }
 
-    def score(playerToScore: Int = if (lastPlayer == 1) 2 else 1): List[Double] = {
+    def score(playerToScore: Int = nextPlayer): List[Double] = {
+        if (_cachedScore.nonEmpty) {
+            return _cachedScore.get
+        }
         val map = list.asScala.zipWithIndex.map(_.swap).toMap
 
         val scores = validPlaces(playerToScore).zipWithIndex
@@ -446,17 +544,6 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
                                   sum_r += 1.1
                                   in_r += 1
                               } else if (pl == 0) {
-                                  /* score based how many empty squares below. Doesn't work because validPlaces
-                                  var j = 1
-                                  var below = map.get(xyToIndex((xy._1 - i, xy._2 + j)))
-                                  while (below.getOrElse(-1) == 0) {
-                                      j += 1
-                                      below = map.get(xyToIndex(xy._1 - i, xy._2 + j))
-                                  }
-                                  sum_r += 0.9 / j
-                                  in_r += 1
-                                  */
-
                                   map.get(xyToIndex(xy._1 - i, xy._2 + 1)) match {
                                       case Some(below) if below != 0 =>
                                           in_r += 1
@@ -615,6 +702,8 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
               }
           }
 
+        _cachedScore = Option(scores)
+
         scores
     }
 
@@ -634,6 +723,9 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
 
             lastMoveIndex = Option(at)
 
+            _cachedScore = None
+            _cachedNext = None
+
             true
         }
     }
@@ -652,12 +744,19 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
         val hf = List.fill(13)('-').mkString("")
         println(s"|$hf|" + {if (lastPlayer == 1) "x" else "o"})
         buf.sliding(7, 7)
-        .foreach(line => println(s"|${line.mkString("|")}|"))
+            .foreach(line => println(s"|${line.mkString("|")}|"))
         println(s"|$hf|")
     }
 
+    private var _cachedNext = Option.empty[List[ConnectBoard]]
+    def isNextCached: Boolean = _cachedNext.isDefined
+
     override def next: List[ConnectBoard] = {
-        val moves = validPlaces(if (lastPlayer == 2) 1 else 2).zipWithIndex.filter (_._1 != 0)
+        if (_cachedNext.isDefined) {
+            return _cachedNext.get
+        }
+
+        val moves = validPlaces(nextPlayer).zipWithIndex.filter (_._1 != 0)
         val boards = moves.map { case (_, index) =>
             val board = new ConnectBoard(w, h, dim)
             var i = 0
@@ -666,19 +765,21 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
                 i += 1
             }
 
-            board.place(index % w, if (lastPlayer == 2) 1 else 2)
+            board.place(index % w, nextPlayer)
             board
         }
+
+        _cachedNext = Some(boards)
 
         boards
     }
 
     def nextWithAction: List[(Int, ConnectBoard)] = {
-        val moves = validPlaces(if (lastPlayer == 2) 1 else 2).zipWithIndex.filter (_._1 != 0)
+        val moves = validPlaces(nextPlayer).zipWithIndex.filter (_._1 != 0)
         val boards = moves.map { case (_, index) =>
             val board = this.copy()
 
-            board.place(index % w, if (lastPlayer == 2) 1 else 2)
+            board.place(index % w, nextPlayer)
             (index % w, board)
         }
 
@@ -692,6 +793,10 @@ class ConnectBoard(val w: Int, val h: Int, val dim: Int = 4) extends State {
             c.list.set(i, v)
             i += 1
         }
+
+        c._cachedScore = this._cachedScore
+        c._cachedNext = this._cachedNext
+
         c
     }
 }
