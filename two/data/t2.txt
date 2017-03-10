@@ -1,0 +1,931 @@
+Round 0.
+Time elapsed: 4.966
+Examined 70207 nodes.
+Pruned 16439 branches.
+Average branching factor (without pruning): 7.00
+Move scores:
+ 2.0 2.0 2.0 2.1 2.0 2.0 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 3
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | |o| | | |
+|-------------|
+Time elapsed: 1.617
+Examined 31715 nodes.
+Pruned 3134 branches.
+Average branching factor (without pruning): 6.98
+Move scores:
+ 1.0 1.0 1.0 1.0 1.0 1.0 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 5
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | |o| |x| |
+|-------------|
+Round 1.
+Time elapsed: 2.783
+Examined 53140 nodes.
+Pruned 13670 branches.
+Average branching factor (without pruning): 6.98
+Move scores:
+ 2.0 3.0 2.1 2.1 2.0 2.0 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 1
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| |o| |o| |x| |
+|-------------|
+Time elapsed: 2.909
+Examined 60116 nodes.
+Pruned 8293 branches.
+Average branching factor (without pruning): 6.97
+Move scores:
+ 2.0 -2.1 2.0 -2.1 2.0 -2.0 -1.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 2
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| |o|x|o| |x| |
+|-------------|
+Round 2.
+Time elapsed: 1.813
+Examined 35618 nodes.
+Pruned 10914 branches.
+Average branching factor (without pruning): 6.95
+Move scores:
+ 2.0 2.0 2.0 2.1 2.0 2.0 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 3
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | |o| | | |
+| |o|x|o| |x| |
+|-------------|
+Time elapsed: 0.621
+Examined 12948 nodes.
+Pruned 694 branches.
+Average branching factor (without pruning): 6.78
+Move scores:
+ 2.0 2.0 2.0 2.0 2.0 2.0 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 1
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| |x| |o| | | |
+| |o|x|o| |x| |
+|-------------|
+Round 3.
+Time elapsed: 2.383
+Examined 48374 nodes.
+Pruned 15919 branches.
+Average branching factor (without pruning): 6.87
+Move scores:
+ 2.0 2.0 2.0 3.2 2.0 3.2 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 3
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | | | | | |
+| | | |o| | | |
+| |x| |o| | | |
+| |o|x|o| |x| |
+|-------------|
+Time elapsed: 0.335
+Examined 6752 nodes.
+Pruned 1850 branches.
+Average branching factor (without pruning): 6.38
+Move scores:
+ -1.0 -2.0 -2.0 2.0 -1.0 -2.0 -1.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,1
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 3
+Winning: None
+Blocking: Some(3)
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| | | |o| | | |
+| |x| |o| | | |
+| |o|x|o| |x| |
+|-------------|
+Round 4.
+Time elapsed: 3.022
+Examined 60539 nodes.
+Pruned 17547 branches.
+Average branching factor (without pruning): 6.49
+Move scores:
+ 2.0 2.0 2.0 2.0 2.0 3.2 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 5
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| | | |o| | | |
+| |x| |o| |o| |
+| |o|x|o| |x| |
+|-------------|
+Time elapsed: 1.328
+Examined 27382 nodes.
+Pruned 2487 branches.
+Average branching factor (without pruning): 6.38
+Move scores:
+ 2.0 2.0 2.0 2.0 2.0 2.0 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 5
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| | | |o| |x| |
+| |x| |o| |o| |
+| |o|x|o| |x| |
+|-------------|
+Round 5.
+Time elapsed: 5.022
+Examined 98310 nodes.
+Pruned 34953 branches.
+Average branching factor (without pruning): 6.49
+Move scores:
+ 2.0 3.8 3.0 2.0 2.0 2.0 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 1
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| |o| |o| |x| |
+| |x| |o| |o| |
+| |o|x|o| |x| |
+|-------------|
+Time elapsed: 1.680
+Examined 32269 nodes.
+Pruned 3026 branches.
+Average branching factor (without pruning): 6.24
+Move scores:
+ 2.0 2.0 2.0 2.0 -1.0 2.0 2.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 0
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| |o| |o| |x| |
+| |x| |o| |o| |
+|x|o|x|o| |x| |
+|-------------|
+Round 6.
+Time elapsed: 4.437
+Examined 89625 nodes.
+Pruned 30321 branches.
+Average branching factor (without pruning): 6.41
+Move scores:
+ 3.2 3.2 -1.0 3.2 3.8 3.2 3.8 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 4
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| |o| |o| |x| |
+| |x| |o| |o| |
+|x|o|x|o|o|x| |
+|-------------|
+Time elapsed: 2.150
+Examined 43077 nodes.
+Pruned 4994 branches.
+Average branching factor (without pruning): 6.27
+Move scores:
+ -2.0 1.0 2.0 -1.0 1.0 -2.0 -1.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 2
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| |o| |o| |x| |
+| |x|x|o| |o| |
+|x|o|x|o|o|x| |
+|-------------|
+Round 7.
+Time elapsed: 1.745
+Examined 35963 nodes.
+Pruned 7362 branches.
+Average branching factor (without pruning): 6.23
+Move scores:
+ -1.0 -2.0 3.8 -1.0 -2.0 -1.0 -3.2 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,2
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 2
+Winning: None
+Blocking: Some(2)
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| | | |x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o| |
+|x|o|x|o|o|x| |
+|-------------|
+Time elapsed: 0.893
+Examined 18963 nodes.
+Pruned 4472 branches.
+Average branching factor (without pruning): 6.08
+Move scores:
+ -2.1 -1.0 -3.2 -2.1 -2.1 -2.2 -2.1 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,1
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 1
+Winning: None
+Blocking: Some(1)
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| |x| |x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o| |
+|x|o|x|o|o|x| |
+|-------------|
+Round 8.
+Time elapsed: 2.614
+Examined 53347 nodes.
+Pruned 19033 branches.
+Average branching factor (without pruning): 6.12
+Move scores:
+ 3.8 4.2 4.3 4.2 3.8 3.8 4.3 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 6
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| |x| |x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o| |
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 2.514
+Examined 51477 nodes.
+Pruned 10354 branches.
+Average branching factor (without pruning): 5.98
+Move scores:
+ -3.2 -3.2 -4.3 -3.2 -3.2 -3.3 -1.0 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 6
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| | | | | | | |
+| |x| |x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 9.
+Time elapsed: 2.960
+Examined 59620 nodes.
+Pruned 25125 branches.
+Average branching factor (without pruning): 6.05
+Move scores:
+ 3.8 4.2 4.3 4.2 3.8 3.8 3.8 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 2
+Winning: None
+Blocking: None
+|-------------|x
+| | | | | | | |
+| | | | | | | |
+| |x|o|x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.757
+Examined 16249 nodes.
+Pruned 3286 branches.
+Average branching factor (without pruning): 5.69
+Move scores:
+ -2.1 -1.0 -1.0 -1.0 -2.1 -2.0 -3.1 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 1
+Winning: None
+Blocking: None
+|-------------|o
+| | | | | | | |
+| |x| | | | | |
+| |x|o|x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 10.
+Time elapsed: 1.540
+Examined 31901 nodes.
+Pruned 11973 branches.
+Average branching factor (without pruning): 5.44
+Move scores:
+ 3.8 3.8 3.8 3.8 3.8 3.8 3.8 
+Next winning moves for both sides:
+0 -> 0,0
+1 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 1
+Winning: None
+Blocking: None
+|-------------|x
+| |o| | | | | |
+| |x| | | | | |
+| |x|o|x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.332
+Examined 7504 nodes.
+Pruned 1957 branches.
+Average branching factor (without pruning): 4.89
+Move scores:
+ -1.0 -1.0 1.0 -2.1 -2.0 -3.1 
+Next winning moves for both sides:
+0 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 3
+Winning: None
+Blocking: None
+|-------------|o
+| |o| | | | | |
+| |x| |x| | | |
+| |x|o|x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 11.
+Time elapsed: 0.529
+Examined 11229 nodes.
+Pruned 3615 branches.
+Average branching factor (without pruning): 4.50
+Move scores:
+ 3.8 4.3 4.3 3.0 4.1 4.1 
+Next winning moves for both sides:
+0 -> 0,0
+2 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 2
+Winning: None
+Blocking: None
+|-------------|x
+| |o| | | | | |
+| |x|o|x| | | |
+| |x|o|x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.123
+Examined 2908 nodes.
+Pruned 672 branches.
+Average branching factor (without pruning): 4.11
+Move scores:
+ -2.1 1.0 -1.0 -2.1 -2.0 -3.1 
+Next winning moves for both sides:
+0 -> 0,0
+2 -> 0,1
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 2
+Winning: None
+Blocking: Some(2)
+|-------------|o
+| |o|x| | | | |
+| |x|o|x| | | |
+| |x|o|x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 12.
+Time elapsed: 0.208
+Examined 4758 nodes.
+Pruned 1486 branches.
+Average branching factor (without pruning): 3.81
+Move scores:
+ 3.0 3.8 2.0 3.8 3.8 
+Next winning moves for both sides:
+0 -> 0,0
+3 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 3
+Winning: None
+Blocking: None
+|-------------|x
+| |o|x|o| | | |
+| |x|o|x| | | |
+| |x|o|x| | | |
+| |o|o|o| |x| |
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.086
+Examined 2010 nodes.
+Pruned 335 branches.
+Average branching factor (without pruning): 3.49
+Move scores:
+ -1.0 -1.0 1.0 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 6
+Winning: None
+Blocking: None
+|-------------|o
+| |o|x|o| | | |
+| |x|o|x| | | |
+| |x|o|x| | | |
+| |o|o|o| |x|x|
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 13.
+Time elapsed: 0.117
+Examined 2742 nodes.
+Pruned 726 branches.
+Average branching factor (without pruning): 3.37
+Move scores:
+ 1.0 1.0 3.8 3.8 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 5
+Winning: None
+Blocking: None
+|-------------|x
+| |o|x|o| | | |
+| |x|o|x| | | |
+| |x|o|x| |o| |
+| |o|o|o| |x|x|
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.057
+Examined 1352 nodes.
+Pruned 156 branches.
+Average branching factor (without pruning): 3.01
+Move scores:
+ -2.0 -2.0 1.0 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 5
+Winning: None
+Blocking: None
+|-------------|o
+| |o|x|o| | | |
+| |x|o|x| |x| |
+| |x|o|x| |o| |
+| |o|o|o| |x|x|
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 14.
+Time elapsed: 0.055
+Examined 1345 nodes.
+Pruned 372 branches.
+Average branching factor (without pruning): 2.79
+Move scores:
+ 1.0 1.0 3.8 3.8 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+5 -> 0,0
+6 -> 0,0
+Algo: 5
+Winning: None
+Blocking: None
+|-------------|x
+| |o|x|o| |o| |
+| |x|o|x| |x| |
+| |x|o|x| |o| |
+| |o|o|o| |x|x|
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.012
+Examined 297 nodes.
+Pruned 40 branches.
+Average branching factor (without pruning): 2.48
+Move scores:
+ -2.0 -2.0 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+6 -> 0,0
+Algo: 6
+Winning: None
+Blocking: None
+|-------------|o
+| |o|x|o| |o| |
+| |x|o|x| |x| |
+| |x|o|x| |o|x|
+| |o|o|o| |x|x|
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 15.
+Time elapsed: 0.004
+Examined 120 nodes.
+Pruned 28 branches.
+Average branching factor (without pruning): 2.13
+Move scores:
+ -4.3 -5.3 3.8 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+6 -> 0,2
+Algo: 6
+Winning: None
+Blocking: Some(6)
+|-------------|x
+| |o|x|o| |o| |
+| |x|o|x| |x|o|
+| |x|o|x| |o|x|
+| |o|o|o| |x|x|
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.004
+Examined 103 nodes.
+Pruned 9 branches.
+Average branching factor (without pruning): 1.95
+Move scores:
+ -1.0 -1.0 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+6 -> 0,0
+Algo: 6
+Winning: None
+Blocking: None
+|-------------|o
+| |o|x|o| |o|x|
+| |x|o|x| |x|o|
+| |x|o|x| |o|x|
+| |o|o|o| |x|x|
+| |x|x|o| |o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 16.
+Time elapsed: 0.002
+Examined 66 nodes.
+Pruned 13 branches.
+Average branching factor (without pruning): 1.65
+Move scores:
+ 1.0 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+Algo: 4
+Winning: None
+Blocking: None
+|-------------|x
+| |o|x|o| |o|x|
+| |x|o|x| |x|o|
+| |x|o|x| |o|x|
+| |o|o|o| |x|x|
+| |x|x|o|o|o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.001
+Examined 24 nodes.
+Pruned 0 branches.
+Average branching factor (without pruning): 1.58
+Move scores:
+ -2.0 -0.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,1
+Algo: 4
+Winning: None
+Blocking: Some(4)
+|-------------|o
+| |o|x|o| |o|x|
+| |x|o|x| |x|o|
+| |x|o|x| |o|x|
+| |o|o|o|x|x|x|
+| |x|x|o|o|o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 17.
+Time elapsed: 0.001
+Examined 34 nodes.
+Pruned 7 branches.
+Average branching factor (without pruning): 1.47
+Move scores:
+ -4.3 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,2
+Algo: 4
+Winning: None
+Blocking: Some(4)
+|-------------|x
+| |o|x|o| |o|x|
+| |x|o|x| |x|o|
+| |x|o|x|o|o|x|
+| |o|o|o|x|x|x|
+| |x|x|o|o|o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.001
+Examined 22 nodes.
+Pruned 0 branches.
+Average branching factor (without pruning): 1.27
+Move scores:
+ -0.0 -0.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+Algo: 4
+Winning: None
+Blocking: None
+|-------------|o
+| |o|x|o| |o|x|
+| |x|o|x|x|x|o|
+| |x|o|x|o|o|x|
+| |o|o|o|x|x|x|
+| |x|x|o|o|o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 18.
+Time elapsed: 0.001
+Examined 15 nodes.
+Pruned 0 branches.
+Average branching factor (without pruning): 1.07
+Move scores:
+ -0.0 1.0 
+Next winning moves for both sides:
+0 -> 0,0
+4 -> 0,0
+Algo: 4
+Winning: None
+Blocking: None
+|-------------|x
+| |o|x|o|o|o|x|
+| |x|o|x|x|x|o|
+| |x|o|x|o|o|x|
+| |o|o|o|x|x|x|
+| |x|x|o|o|o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Time elapsed: 0.000
+Examined 2 nodes.
+Pruned 0 branches.
+Average branching factor (without pruning): 1.00
+Move scores:
+ -0.0 
+Next winning moves for both sides:
+0 -> 0,0
+Algo: 0
+Winning: None
+Blocking: None
+|-------------|o
+| |o|x|o|o|o|x|
+| |x|o|x|x|x|o|
+| |x|o|x|o|o|x|
+| |o|o|o|x|x|x|
+|x|x|x|o|o|o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Round 19.
+Time elapsed: 0.000
+Examined 1 nodes.
+Pruned 0 branches.
+Average branching factor (without pruning): 1.00
+Move scores:
+ 1.0 
+Next winning moves for both sides:
+0 -> 1,0
+Algo: 0
+Winning: Some(0)
+Blocking: None
+|-------------|x
+| |o|x|o|o|o|x|
+| |x|o|x|x|x|o|
+| |x|o|x|o|o|x|
+|o|o|o|o|x|x|x|
+|x|x|x|o|o|o|x|
+|x|o|x|o|o|x|o|
+|-------------|
+Player o wins!
+Number of rounds until win: 20
